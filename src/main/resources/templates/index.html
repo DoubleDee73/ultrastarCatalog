@@ -1,0 +1,70 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Karaoke List</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css?family=Fjalla+One&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/75aad18f9f.js" crossorigin="anonymous"></script>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+    <script src="js/jQuery.loadScroll.js"></script>
+    <script src="js/transition.js"></script>
+</head>
+<body>
+<form method="GET">
+    <div class="box">
+        <div class="container-1">
+            <span class="icon"><i class="fa fa-search"></i></span>
+            <input type="search" id="search" name="searchterm" th:placeholder="${search}"/>
+        </div>
+    </div>
+    <div class="select-wrapper">
+        <label for="language">Language</label>
+        <select name="language" id="language" class="select-language" placeholder="Language" onchange="this.form.submit()">
+            <option th:each="temp : ${languages}" th:value="${temp.languageCode}" th:text="${temp.language}"
+                    th:selected="${temp.languageCode} == ${selectedLanguage.languageCode}"></option>
+        </select>
+    </div>
+    <div class="select-wrapper">
+        <label for="decade">Decade</label>
+        <select name="decade" id="decade" class="select-language" placeholder="Decade" onchange="this.form.submit()">
+            <option th:each="temp : ${decades}" th:value="${temp.displayName}" th:text="${temp.displayName}"
+                    th:selected="${temp.displayName} == ${selectedDecade.displayName}"></option>
+        </select>
+    </div>
+</form>
+<div class="wrapper">
+    <nav class="tabs">
+        <div class="selector"></div>
+        <a href="/artists" class="" th:classappend="${artistsActive} ? active : ''"><i class="fa fa-guitar"></i>Artists</a>
+        <a href="/title" class="" th:classappend="${titlesActive} ? active : ''"><i class="fa fa-music"></i>Title</a>
+    </nav>
+</div>
+<div th:if="${songs.size() > 0}">
+    <div class="headline" ><span th:text="${songs.size()}">n</span> songs found.</div>
+</div>
+<div class="main">
+    <div th:if="${songs.empty}">
+        <span> No Songs Available </span>
+    </div>
+    <div class="flip-card" th:each="song : ${songs}">
+        <div class="flip-card-inner">
+            <div class="flip-card-front">
+                <img th:src="@{/images/} + ${song.imagePath}" loading="lazy"/>
+                <h2 th:text=" ${song.artist}">Artist</h2>
+                <p th:text="${song.titleAndVariant}">Title</p>
+            </div>
+            <div class="flip-card-back">
+                <h3 th:text="${song.artist}">Artist</h3>
+                <h4 th:text="${song.title}">Title</h4>
+                <p th:text="${song.language}">Language</p>
+                <p th:text="${song.year}">Year</p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

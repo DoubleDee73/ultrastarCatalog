@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sync Completed.</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+</head>
+<body class="sync">
+<h1>Sync Finished</h1>
+<div th:if="${newSongs.size() > 0}">
+    <p>New Songs: <span th:text="${newSongs.size()}">#</span></p>
+    <ul>
+        <li th:each="newSong:${newSongs}" th:text="${newSong}"></li>
+    </ul>
+</div>
+<div th:if="${updatedSongs.size() > 0}">
+    <p>Updated Songs: <span th:text="${updatedSongs.size()}">#</span></p>
+    <ul>
+        <li th:each="updatedSong:${updatedSongs}" th:text="${updatedSong}"></li>
+    </ul>
+</div>
+<div th:each="oddity : ${oddities}">
+    <p th:text="${oddity}">Oddity</p>
+</div>
+<p>Access DB now up to date!</p>
+</body>
+</html>
