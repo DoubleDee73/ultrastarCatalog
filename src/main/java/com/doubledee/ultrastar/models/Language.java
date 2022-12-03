@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 public enum Language {
-    UNDEFINED("ALL", StringUtils.EMPTY, Collections.emptyList()),
+    UNDEFINED("ALL", "", Collections.emptyList()),
     ENGLISH("English", "en", Arrays.asList("Englisch")),
     GERMAN("Deutsch", "de", Arrays.asList("German")),
     FRENCH("Français", "fr", Arrays.asList("French", "Französisch")),

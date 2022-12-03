@@ -5,14 +5,14 @@
 
 body {
   font-family: 'Fjalla One', sans-serif;
-  font-size: 18pt;
+  font-size: 22pt;
   background-color: #222;
 }
 
 .sync {
     color: #DDD;
     font-family: 'Roboto', sans-serif;
-    font-size: 1.1em;
+    font-size: 1.5em;
 }
 
 .main {
@@ -27,7 +27,7 @@ body {
 .headline {
     color: #DDD;
     font-family: 'Roboto', sans-serif;
-    font-size: 1.1em;
+    font-size: 1.5em;
     margin: 20px auto;
     text-align: center;
 }
@@ -51,11 +51,11 @@ body {
 }
 
 .container-1 input#search{
-  width: 400px;
+  width: 600px;
   height: 60px;
   background: #2b303b;
   border: none;
-  font-size: 1.1em;
+  font-size: 1.5em;
   float: left;
   color: #63717f;
   padding-left: 45px;
@@ -74,7 +74,7 @@ body {
 }
 
 h2 {
-  font-size: 1.2 em;
+  font-size: 1.5 em;
   margin-bottom: 5px;
 }
 
@@ -135,7 +135,7 @@ img {
 
 .tabs{
   margin-top:20px;
-  font-size:1.3em;
+  font-size:1.5em;
   padding:0px;
   list-style:none;
   background:#fff;
@@ -197,7 +197,7 @@ select {
   padding-left: 10px;
   background: #2b303bf;
   font-family: 'Roboto', sans-serif;
-  font-size: 1.1em;
+  font-size: 1.5em;
   box-shadow: 2px 2px 5px 1px rgba(0,0,0,0.3);
   border-radius: 3px;
   outline: none;

@@ -45,7 +45,7 @@ public class UltrastarController {
                                                       .startsWith(language.toLowerCase().substring(0, 2)))
                          .collect(Collectors.toList());
         }
-        if (StringUtils.isNotEmpty(decade)) {
+        if (StringUtils.isNotEmpty(decade) && !decade.equals(Decade.ALL.getDisplayName())) {
             songs = songs.stream().filter(song -> song.isInDecade(decade)).collect(Collectors.toList());
         }
         String temp = "";
@@ -80,7 +80,7 @@ public class UltrastarController {
                                                       .startsWith(language.toLowerCase().substring(0, 2)))
                          .collect(Collectors.toList());
         }
-        if (StringUtils.isNotEmpty(decade)) {
+        if (StringUtils.isNotEmpty(decade) && !decade.equals(Decade.ALL.getDisplayName())) {
             songs = songs.stream().filter(song -> song.isInDecade(decade)).collect(Collectors.toList());
         }
         String temp = "";
@@ -89,7 +89,7 @@ public class UltrastarController {
         model.addAttribute("artistsActive", false);
         model.addAttribute("titlesActive", true);
         model.addAttribute("languages", Language.values());
-        model.addAttribute("selectedLanguage", language);
+        model.addAttribute("selectedLanguage", Language.getLanguageByCode(language));
         model.addAttribute("temp", temp);
         model.addAttribute("decades", Decade.values());
         model.addAttribute("selectedDecade", Decade.getDecadeByString(decade));
@@ -99,7 +99,8 @@ public class UltrastarController {
     @RequestMapping(value = "/images/{file}", method = RequestMethod.GET)
     public void getImageAsByteArray(HttpServletResponse response,
                                     @PathVariable("file") String file) throws IOException {
-        String actualFile = file.replace("%20", " ").replace("{", "[").replace("}", "]").replace(".jpg", ".txt");
+        String actualFile = file.replace("%20", " ").replace("{", "[")
+                                .replace("}", "]").replace(".jpg", ".txt");
         Song song = UltrastarApplication.SONGS.stream()
                                               .filter(it -> it.getTextFile().equalsIgnoreCase(actualFile))
                                               .findFirst()

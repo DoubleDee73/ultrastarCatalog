@@ -1,5 +1,6 @@
 package com.doubledee.ultrastar.importer;
 
+import com.doubledee.ultrastar.models.Language;
 import com.doubledee.ultrastar.models.Song;
 import com.doubledee.ultrastar.models.UltrastarFile;
 import org.apache.commons.lang3.StringUtils;
@@ -52,6 +53,10 @@ public class SongImporter {
                     importedSongs.add(song);
                 } else {
                     System.out.println("Not a valid Ultrastar song: " + file.getAbsolutePath());
+                }
+                hasFile = Files.exists(Paths.get(SONGS_PATH + song.getPath() + "\\" + song.getCover()));
+                if (!hasFile) {
+                    System.out.println("Invalid cover art: " + file.getAbsolutePath());
                 }
             }
         } catch (IOException e) {

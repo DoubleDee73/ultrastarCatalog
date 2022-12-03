@@ -154,6 +154,10 @@ public class Song {
         this.language = language;
     }
 
+    public String getLanguageCode() {
+        return getLanguage().getLanguageCode();
+    }
+
     public String getBpm() {
         return bpm;
     }
