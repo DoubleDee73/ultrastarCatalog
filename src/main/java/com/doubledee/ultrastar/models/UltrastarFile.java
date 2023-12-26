@@ -21,6 +21,29 @@ public class UltrastarFile {
     private String path;
     private String filename;
     private Date lastUpdate;
+    private String comment;
+    private String gap;
+    private String edition;
+    private String genre;
+    private String videogap;
+    private String videostart;
+    private String start;
+    private String end;
+    private String length;
+    private String resolution;
+    private String album;
+    private String previewstart;
+    private String composer;
+    private String creator;
+    private String author;
+    private String encoding;
+    private String p1;
+    private String p2;
+    private String notesgap;
+    private String medleystartbeat;
+    private String medleyendbeat;
+    private String relative;
+    private String id;
 
     public static final String UTF8_BOM = "\uFEFF";
 
@@ -149,5 +172,189 @@ public class UltrastarFile {
 
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public String getGap() {
+        return gap;
+    }
+
+    public void setGap(String gap) {
+        this.gap = gap;
+    }
+
+    public String getEdition() {
+        return edition;
+    }
+
+    public void setEdition(String edition) {
+        this.edition = edition;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public String getVideogap() {
+        return videogap;
+    }
+
+    public void setVideogap(String videogap) {
+        this.videogap = videogap;
+    }
+
+    public String getStart() {
+        return start;
+    }
+
+    public void setStart(String start) {
+        this.start = start;
+    }
+
+    public String getEnd() {
+        return end;
+    }
+
+    public void setEnd(String end) {
+        this.end = end;
+    }
+
+    public String getLength() {
+        return length;
+    }
+
+    public void setLength(String length) {
+        this.length = length;
+    }
+
+    public String getResolution() {
+        return resolution;
+    }
+
+    public void setResolution(String resolution) {
+        this.resolution = resolution;
+    }
+
+    public String getAlbum() {
+        return album;
+    }
+
+    public void setAlbum(String album) {
+        this.album = album;
+    }
+
+    public String getPreviewstart() {
+        return previewstart;
+    }
+
+    public void setPreviewstart(String previewstart) {
+        this.previewstart = previewstart;
+    }
+
+    public String getComposer() {
+        return composer;
+    }
+
+    public void setComposer(String composer) {
+        this.composer = composer;
+    }
+
+    public String getCreator() {
+        return creator;
+    }
+
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getEncoding() {
+        return encoding;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
+
+    public String getP1() {
+        return p1;
+    }
+
+    public void setP1(String p1) {
+        this.p1 = p1;
+    }
+
+    public String getP2() {
+        return p2;
+    }
+
+    public void setP2(String p2) {
+        this.p2 = p2;
+    }
+
+    public String getNotesgap() {
+        return notesgap;
+    }
+
+    public void setNotesgap(String notesgap) {
+        this.notesgap = notesgap;
+    }
+
+    public String getMedleystartbeat() {
+        return medleystartbeat;
+    }
+
+    public void setMedleystartbeat(String medleystartbeat) {
+        this.medleystartbeat = medleystartbeat;
+    }
+
+    public String getMedleyendbeat() {
+        return medleyendbeat;
+    }
+
+    public void setMedleyendbeat(String medleyendbeat) {
+        this.medleyendbeat = medleyendbeat;
+    }
+
+    public String getRelative() {
+        return relative;
+    }
+
+    public void setRelative(String relative) {
+        this.relative = relative;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getVideostart() {
+        return videostart;
+    }
+
+    public void setVideostart(String videostart) {
+        this.videostart = videostart;
     }
 }

@@ -139,7 +139,7 @@ public class UltrastarController {
                 msAccess.addSong(importedSong);
                 newSongs.add(importedSong.getPath() + "\\" + importedSong.getTextFile());
             } else {
-                importedSong.setId(dbSong.getId());
+                importedSong.setUid(dbSong.getUid());
                 if (dbSong.getLastUpdate() == null || importedSong.getLastUpdate().after(dbSong.getLastUpdate()) ||
                         (!importedSong.getTitle().equalsIgnoreCase(dbSong.getTitle()))) {
                     msAccess.updateSong(importedSong);
@@ -155,7 +155,7 @@ public class UltrastarController {
                                                              .noneMatch(song -> song.getTextFile()
                                                                                     .equalsIgnoreCase(textFile));
             if (hasNoneMatch) {
-                oddities.add(dbSong.getId() + ": " + dbSong.getPath() + "/" + dbSong.getTextFile() + " not found");
+                oddities.add(dbSong.getUid() + ": " + dbSong.getPath() + "/" + dbSong.getTextFile() + " not found");
             }
         }
         model.addAttribute("newSongs", newSongs);

@@ -8,7 +8,7 @@ public enum SongType {
     ORIGINAL_KARAOKE("Original Karaoke", StringUtils.EMPTY),
     KARAOKE("Karaoke", "COVER"),
     WITH_VOCALS("With Vocals", "VOX"),
-    FILTERED("Filtered", "FILTERED");
+    FILTERED("Filtered", "FLT");
 
     String songTypeName;
     String qualifier;

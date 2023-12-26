@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Song {
-    private int id;
+    private int uid;
     private final String title;
     private final String artist;
     private final String mp3;
@@ -20,18 +20,40 @@ public class Song {
     private SongType songType;
     private Language language;
     private String bpm;
+    private String gap;
     private String cover;
     private String background;
     private String video;
+    private String videogap;
     private String year;
+    private String length;
+    private String start;
+    private String end;
     private Date dateAdded;
     private Date lastUpdate;
     private String variant;
+    private String comment;
+    private String genre;
+    private String edition;
+    private String album;
+    private String composer;
+    private String creator;
+    private String author;
+    private String resolution;
+    private String previewstart;
+    private String p1;
+    private String p2;
+    private String notesgap;
+    private String medleystartbeat;
+    private String medleyendbeat;
+    private String relative;
+    private String id;
+    private boolean dirty;
 
     private final static Pattern BRACKET_PATTERN = Pattern.compile("\\[.*?\\]");
 
-    public Song(int id, String title, String artist, String mp3, String path, String textFile) {
-        this.id = id;
+    public Song(int uid, String title, String artist, String mp3, String path, String textFile) {
+        this.uid = uid;
         this.title = title;
         this.artist = artist;
         this.mp3 = mp3;
@@ -57,8 +79,15 @@ public class Song {
     }
 
     public Song(UltrastarFile ultrastarFile) {
-        this.id = 0;
+        this.uid = 0;
         this.songType = SongType.getSongTypeByTitle(ultrastarFile.getTitle());
+        this.comment = ultrastarFile.getComment();
+        if (this.songType != SongType.ORIGINAL_KARAOKE) {
+            if (StringUtils.isEmpty(ultrastarFile.getComment())) {
+                setComment(songType.songTypeName);
+                this.dirty = true;
+            }
+        }
         String tempTitle;
         if (StringUtils.isNotEmpty(songType.qualifier)) {
             tempTitle = StringUtils.replaceIgnoreCase(ultrastarFile.getTitle(), " (" + songType.qualifier + ")",
@@ -84,10 +113,31 @@ public class Song {
         this.path = ultrastarFile.getPath();
         this.textFile = ultrastarFile.getFilename();
         this.lastUpdate = ultrastarFile.getLastUpdate();
+
+        this.gap = ultrastarFile.getGap();
+        this.videogap = ultrastarFile.getVideogap();
+        this.length = ultrastarFile.getLength();
+        this.start = ultrastarFile.getStart();
+        this.end = ultrastarFile.getEnd();
+        this.genre = ultrastarFile.getGenre();
+        this.edition = ultrastarFile.getEdition();
+        this.album = ultrastarFile.getAlbum();
+        this.composer = ultrastarFile.getComposer();
+        this.creator = ultrastarFile.getCreator();
+        this.author = ultrastarFile.getAuthor();
+        this.resolution = ultrastarFile.getResolution();
+        this.previewstart = ultrastarFile.getPreviewstart();
+        this.p1 = ultrastarFile.getP1();
+        this.p2 = ultrastarFile.getP2();
+        this.notesgap = ultrastarFile.getNotesgap();
+        this.medleystartbeat = ultrastarFile.getMedleystartbeat();
+        this.medleyendbeat = ultrastarFile.getMedleyendbeat();
+        this.relative = ultrastarFile.getRelative();
+        this.id = ultrastarFile.getId();
     }
 
-    public int getId() {
-        return id;
+    public int getUid() {
+        return uid;
     }
 
     public String getTitle() {
@@ -198,8 +248,8 @@ public class Song {
         this.year = year;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setUid(int uid) {
+        this.uid = uid;
     }
 
     public Date getLastUpdate() {
@@ -222,6 +272,18 @@ public class Song {
         return (getTitle() + " " + StringUtils.defaultString(getVariant())).trim();
     }
 
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
+
     public String getImagePath() {
         return getTextFile().replace("[", "{")
                             .replace("]", "}")
@@ -235,5 +297,165 @@ public class Song {
         int year = NumberUtils.toInt(getYear());
         Decade decadeEnum = Decade.getDecadeByString(decade);
         return year >= decadeEnum.getStartYear() && year < (decadeEnum.getStartYear() + 10);
+    }
+
+    public String getGap() {
+        return gap;
+    }
+
+    public void setGap(String gap) {
+        this.gap = gap;
+    }
+
+    public String getLength() {
+        return length;
+    }
+
+    public void setLength(String length) {
+        this.length = length;
+    }
+
+    public String getStart() {
+        return start;
+    }
+
+    public void setStart(String start) {
+        this.start = start;
+    }
+
+    public String getEnd() {
+        return end;
+    }
+
+    public void setEnd(String end) {
+        this.end = end;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public String getEdition() {
+        return edition;
+    }
+
+    public void setEdition(String edition) {
+        this.edition = edition;
+    }
+
+    public String getAlbum() {
+        return album;
+    }
+
+    public void setAlbum(String album) {
+        this.album = album;
+    }
+
+    public String getComposer() {
+        return composer;
+    }
+
+    public void setComposer(String composer) {
+        this.composer = composer;
+    }
+
+    public String getCreator() {
+        return creator;
+    }
+
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getVideogap() {
+        return videogap;
+    }
+
+    public void setVideogap(String videogap) {
+        this.videogap = videogap;
+    }
+
+    public String getResolution() {
+        return resolution;
+    }
+
+    public void setResolution(String resolution) {
+        this.resolution = resolution;
+    }
+
+    public String getPreviewstart() {
+        return previewstart;
+    }
+
+    public void setPreviewstart(String previewstart) {
+        this.previewstart = previewstart;
+    }
+
+    public String getP1() {
+        return p1;
+    }
+
+    public void setP1(String p1) {
+        this.p1 = p1;
+    }
+
+    public String getP2() {
+        return p2;
+    }
+
+    public void setP2(String p2) {
+        this.p2 = p2;
+    }
+
+    public String getNotesgap() {
+        return notesgap;
+    }
+
+    public void setNotesgap(String notesgap) {
+        this.notesgap = notesgap;
+    }
+
+    public String getMedleystartbeat() {
+        return medleystartbeat;
+    }
+
+    public void setMedleystartbeat(String medleystartbeat) {
+        this.medleystartbeat = medleystartbeat;
+    }
+
+    public String getMedleyendbeat() {
+        return medleyendbeat;
+    }
+
+    public void setMedleyendbeat(String medleyendbeat) {
+        this.medleyendbeat = medleyendbeat;
+    }
+
+    public String getRelative() {
+        return relative;
+    }
+
+    public void setRelative(String relative) {
+        this.relative = relative;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }
