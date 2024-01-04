@@ -5,6 +5,8 @@ import com.doubledee.ultrastar.importer.SongImporter;
 import com.doubledee.ultrastar.models.Decade;
 import com.doubledee.ultrastar.models.Language;
 import com.doubledee.ultrastar.models.Song;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +15,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -108,7 +108,7 @@ public class UltrastarController {
         if (song != null) {
             String cover = song.getCover() == null ? song.getArtist() + " - " + song.getTitle() + " [co].jpg" : song.getCover();
             InputStream in = new BufferedInputStream(
-                    new FileInputStream(SongImporter.SONGS_PATH + song.getPath() + "\\" + cover));
+                    new FileInputStream( song.getPath() + "\\" + cover));
             response.setContentType(MediaType.IMAGE_JPEG_VALUE);
             IOUtils.copy(in, response.getOutputStream());
         }

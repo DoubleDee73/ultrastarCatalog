@@ -44,6 +44,7 @@ public class UltrastarFile {
     private String medleyendbeat;
     private String relative;
     private String id;
+    private String version;
 
     public static final String UTF8_BOM = "\uFEFF";
 
@@ -356,5 +357,13 @@ public class UltrastarFile {
 
     public void setVideostart(String videostart) {
         this.videostart = videostart;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

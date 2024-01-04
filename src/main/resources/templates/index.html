@@ -43,7 +43,7 @@
         <a href="/title" class="" th:classappend="${titlesActive} ? active : ''"><i class="fa fa-music"></i>Title</a>
     </nav>
 </div>
-<div th:if="${songs.size() > 0}">
+<div th:unless="${songs.empty}">
     <div class="headline" ><span th:text="${songs.size()}">n</span> songs found.</div>
 </div>
 <div class="main">

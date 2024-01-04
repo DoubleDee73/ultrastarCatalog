@@ -34,7 +34,8 @@ public enum UltrastarTag {
     ID,
     RELATIVE,
     P1,
-    P2;
+    P2,
+    VERSION;
 
     public static UltrastarTag getTagForLine(String line) {
         if (!line.startsWith("#")) {

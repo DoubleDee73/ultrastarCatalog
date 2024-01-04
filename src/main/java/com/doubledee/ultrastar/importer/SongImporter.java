@@ -16,22 +16,53 @@ import java.util.stream.Collectors;
 
 public class SongImporter {
 
-    public static final String SONGS_PATH = "C:\\Program Files (x86)\\UltraStar Deluxe\\songs\\";
+    //    public static final String SONGS_PATH = "C:\\Program Files (x86)\\UltraStar Deluxe\\songs\\";
+    public static final String SONGS_PATH = "SongDir";
 
     private List<Song> importedSongs = new ArrayList<>();
 
     public SongImporter() {
-        this(SONGS_PATH);
+        File config = new File("config.properties");
+        if (!config.exists()) {
+            System.out.println("config.properties were not found in " + config.getParent() + ". Creating new file.");
+            FileWriter myWriter = null;
+            try {
+                myWriter = new FileWriter("config.properties");
+                myWriter.write(SONGS_PATH + "1=C:/Program Files (x86)/UltraStar Deluxe/songs/");
+                myWriter.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        Properties appProps = new Properties();
+        try {
+            appProps.load(new FileInputStream(config.getAbsolutePath()));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            throw new RuntimeException(e);
+        }
+        String songsPath;
+        int i = 1;
+        do {
+            songsPath = (String) appProps.get(SONGS_PATH + (i++));
+            if (songsPath != null) {
+                init(songsPath);
+            }
+        } while (songsPath != null);
     }
 
-    public SongImporter(String path) {
+    public void init(String path) {
         try {
+            System.out.println("Initializing songs in " + path);
             List<File> files = Files.walk(Paths.get(path))
-                    .filter(Files::isRegularFile)
-                    .map(Path::toFile)
-                    .filter(file -> !file.getParent().endsWith("\\_temp"))
-                    .filter(file -> file.getName().toLowerCase().endsWith(".txt"))
-                    .collect(Collectors.toList());
+                                    .filter(Files::isRegularFile)
+                                    .map(Path::toFile)
+                                    .filter(file -> !file.getParent().endsWith("\\_temp"))
+                                    .filter(file -> file.getName().toLowerCase().endsWith(".txt"))
+                                    .toList();
+            if (files.isEmpty()) {
+                System.out.println("No files were found in " + path);
+            }
             Map<String, String> filesToUpdate = new HashMap<>();
             for (File file : files) {
 //                System.out.println("Reading " + file.getName());
@@ -41,10 +72,10 @@ public class SongImporter {
                 if (song.isDirty()) {
                     //updateFile(song, file, filesToUpdate);
                 }
-                boolean hasFile = Files.exists(Paths.get(SONGS_PATH + song.getPath() + "\\" + song.getMp3()));
+                boolean hasFile = Files.exists(Paths.get(song.getPath() + "\\" + song.getMp3()));
                 if (hasFile && StringUtils.isNotEmpty(ultrastarFile.getTitle())) {
                     if (StringUtils.isEmpty(song.getCover())) {
-                        for (File cover : new File(SONGS_PATH + song.getPath()).listFiles()) {
+                        for (File cover : new File(song.getPath()).listFiles()) {
                             if (cover.isFile() && cover.getName().contains("[co]")) {
                                 song.setCover(cover.getName());
                                 break;
@@ -56,7 +87,7 @@ public class SongImporter {
                 } else {
                     System.out.println("Not a valid Ultrastar song: " + file.getAbsolutePath());
                 }
-                hasFile = Files.exists(Paths.get(SONGS_PATH + song.getPath() + "\\" + song.getCover()));
+                hasFile = Files.exists(Paths.get(song.getPath() + "\\" + song.getCover()));
                 if (!hasFile) {
                     System.out.println("Invalid cover art: " + file.getAbsolutePath());
                 }
@@ -84,19 +115,19 @@ public class SongImporter {
         addToContent(content, UltrastarTag.TITLE, song.getTitle());
         addToContent(content, UltrastarTag.ARTIST, song.getArtist());
         addToContent(content, UltrastarTag.MP3, song.getMp3());
-        addToContent(content, UltrastarTag.BPM , song.getBpm());
-        addToContent(content, UltrastarTag.GAP , song.getGap());
+        addToContent(content, UltrastarTag.BPM, song.getBpm());
+        addToContent(content, UltrastarTag.GAP, song.getGap());
         addToContent(content, UltrastarTag.START, song.getStart());
         addToContent(content, UltrastarTag.END, song.getEnd());
-        addToContent(content, UltrastarTag.LANGUAGE , song.getLanguage().getLanguage());
-        addToContent(content, UltrastarTag.YEAR , song.getYear());
-        addToContent(content, UltrastarTag.GENRE , song.getGenre());
-        addToContent(content, UltrastarTag.COVER , song.getCover());
-        addToContent(content, UltrastarTag.BACKGROUND , song.getBackground());
+        addToContent(content, UltrastarTag.LANGUAGE, song.getLanguage().getLanguage());
+        addToContent(content, UltrastarTag.YEAR, song.getYear());
+        addToContent(content, UltrastarTag.GENRE, song.getGenre());
+        addToContent(content, UltrastarTag.COVER, song.getCover());
+        addToContent(content, UltrastarTag.BACKGROUND, song.getBackground());
         addToContent(content, UltrastarTag.VIDEO, song.getVideo());
         addToContent(content, UltrastarTag.VIDEOGAP, song.getVideogap());
         addToContent(content, UltrastarTag.PREVIEWSTART, song.getPreviewstart());
-        addToContent(content, UltrastarTag.EDITION , song.getEdition());
+        addToContent(content, UltrastarTag.EDITION, song.getEdition());
         addToContent(content, UltrastarTag.CREATOR, song.getAuthor());
         addToContent(content, UltrastarTag.CREATOR, song.getCreator());
         addToContent(content, UltrastarTag.COMPOSER, song.getComposer());
