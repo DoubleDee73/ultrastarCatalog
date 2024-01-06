@@ -9,7 +9,7 @@ import java.util.Properties;
 
 public class MsAccessDb {
 
-    private Map<Integer, Song> songs;
+    private Map<Long, Song> songs;
 
     private final String path;
 
@@ -47,7 +47,7 @@ public class MsAccessDb {
         return null;
     }
 
-    public Map<Integer, Song> getSongs() {
+    public Map<Long, Song> getSongs() {
         return songs;
     }
 
@@ -91,7 +91,7 @@ public class MsAccessDb {
             }
             preparedStatement.setDate(i++, new Date(System.currentTimeMillis()));
             preparedStatement.setString(i++, song.getVariant());
-            preparedStatement.setInt(i++, song.getUid());
+            preparedStatement.setLong(i++, song.getUid());
 
             if (preparedStatement.executeUpdate() > 0) {
                 ResultSet generatedKeys = preparedStatement.getGeneratedKeys();

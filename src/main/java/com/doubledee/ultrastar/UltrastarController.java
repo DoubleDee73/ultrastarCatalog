@@ -7,6 +7,7 @@ import com.doubledee.ultrastar.models.Language;
 import com.doubledee.ultrastar.models.Song;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.*;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,8 +34,16 @@ public class UltrastarController {
                              @RequestParam(name = "language", required = false, defaultValue = "") String language,
                              @RequestParam(name = "decade", required = false, defaultValue = "") String decade,
                              Model model) {
-        UltrastarApplication.SONGS.sort(Comparator.comparing(Song::getArtistNormalized));
-        List<Song> songs = UltrastarApplication.SONGS;
+        List<Song> songs = new ArrayList<>(UltrastarApplication.SONGS.values());
+        if (CollectionUtils.isEmpty(songs)) {
+            System.out.println("No songs were initilized yet. Retrying...");
+            songs = new SongImporter().getImportedSongs();
+        }
+        if (songs == null) {
+            System.out.println("Something odd happened. No Songs!");
+            songs = Collections.emptyList();
+        }
+        songs.sort(Comparator.comparing(Song::getArtistNormalized));
         if (StringUtils.isNotEmpty(searchterm)) {
             String searchTerm = Normalizer.normalize(searchterm, Normalizer.Form.NFD).toLowerCase();
             songs = songs.stream().filter(song -> song.getArtistNormalized().contains(searchTerm) ||
@@ -66,8 +76,16 @@ public class UltrastarController {
                             @RequestParam(name = "language", required = false, defaultValue = "") String language,
                             @RequestParam(name = "decade", required = false, defaultValue = "") String decade,
                             Model model) {
-        UltrastarApplication.SONGS.sort(Comparator.comparing(Song::getTitleNormalized));
-        List<Song> songs = UltrastarApplication.SONGS;
+        List<Song> songs = new ArrayList<>(UltrastarApplication.SONGS.values());
+        if (CollectionUtils.isEmpty(songs)) {
+            System.out.println("No songs were initilized yet. Retrying...");
+            songs = new SongImporter().getImportedSongs();
+        }
+        if (songs == null) {
+            System.out.println("Something odd happened. No Songs!");
+            songs = Collections.emptyList();
+        }
+        songs.sort(Comparator.comparing(Song::getTitleNormalized));
         if (StringUtils.isNotEmpty(searchterm)) {
             String normalizedSearch = Normalizer.normalize(searchterm, Normalizer.Form.NFD).toLowerCase();
             songs = songs.stream()
@@ -99,23 +117,33 @@ public class UltrastarController {
     @RequestMapping(value = "/images/{file}", method = RequestMethod.GET)
     public void getImageAsByteArray(HttpServletResponse response,
                                     @PathVariable("file") String file) throws IOException {
-        String actualFile = file.replace("%20", " ").replace("{", "[")
-                                .replace("}", "]").replace(".jpg", ".txt");
-        Song song = UltrastarApplication.SONGS.stream()
-                                              .filter(it -> it.getTextFile().equalsIgnoreCase(actualFile))
-                                              .findFirst()
-                                              .orElse(null);
+        String uid = file.replace(".jpg", "");
+        Song song = UltrastarApplication.SONGS.get(Long.parseLong(uid));
         if (song != null) {
             String cover = song.getCover() == null ? song.getArtist() + " - " + song.getTitle() + " [co].jpg" : song.getCover();
             InputStream in = new BufferedInputStream(
-                    new FileInputStream( song.getPath() + "\\" + cover));
+                    new FileInputStream(song.getPath() + "\\" + cover));
             response.setContentType(MediaType.IMAGE_JPEG_VALUE);
             IOUtils.copy(in, response.getOutputStream());
         }
     }
 
+    @RequestMapping(value = "/audio/{file}", method = RequestMethod.GET)
+    public void getAudioAsByteArray(HttpServletResponse response,
+                                    @PathVariable("file") String file) throws IOException {
+        String uid = file.replace(".mp3", "");
+        Song song = UltrastarApplication.SONGS.get(Long.parseLong(uid));
+        if (song != null) {
+            InputStream in = new BufferedInputStream(
+                    new FileInputStream(song.getPath() + "\\" + song.getMp3()));
+            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+            IOUtils.copy(in, response.getOutputStream());
+        }
+    }
+
     @RequestMapping(value = "/dbsync", method = RequestMethod.GET)
-    public String syncWithDb(@RequestParam(name = "file", required = false, defaultValue = "Ultrastar") String file,
+    public String syncWithDb(@RequestParam(name = "file", required = false, defaultValue = "Ultrastar") String
+                                     file,
                              Model model) {
         List<String> oddities = new ArrayList<>();
         System.out.println("Sync with " + file + " started.");
@@ -129,7 +157,7 @@ public class UltrastarController {
         System.out.println("Access DB " + file + " found. Adding new songs.");
         List<String> newSongs = new ArrayList<>();
         List<String> updatedSongs = new ArrayList<>();
-        for (Song importedSong : UltrastarApplication.SONGS) {
+        for (Song importedSong : UltrastarApplication.SONGS.values()) {
             if (importedSong == null || StringUtils.isEmpty(importedSong.getTextFile()) ||
                     importedSong.getTextFile().startsWith("_temp")) {
                 continue;
@@ -151,7 +179,7 @@ public class UltrastarController {
         // Reverse-Check
         for (Song dbSong : msAccess.getSongs().values()) {
             String textFile = dbSong.getTextFile();
-            boolean hasNoneMatch = UltrastarApplication.SONGS.stream()
+            boolean hasNoneMatch = UltrastarApplication.SONGS.values().stream()
                                                              .noneMatch(song -> song.getTextFile()
                                                                                     .equalsIgnoreCase(textFile));
             if (hasNoneMatch) {

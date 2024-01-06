@@ -3,27 +3,26 @@ package com.doubledee.ultrastar;
 import com.doubledee.ultrastar.importer.SongImporter;
 import com.doubledee.ultrastar.models.Song;
 import net.davidashen.text.Hyphenator;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class UltrastarApplication {
 
-	public static List<Song> SONGS;
+	public static Map<Long, Song> SONGS;
 	public static void main(String[] args) {
 		SpringApplication.run(UltrastarApplication.class, args);
-		SONGS = new SongImporter().getImportedSongs();
+		SONGS = new SongImporter().getImportedSongs()
+								  .stream()
+								  .collect(Collectors.toMap(Song::getUid, Function.identity()));
 	}
 
 	public static void hyphenate(String[] args) throws IOException, UnsupportedFlavorException {

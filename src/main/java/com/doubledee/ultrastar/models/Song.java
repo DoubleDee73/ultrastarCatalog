@@ -7,11 +7,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.Normalizer;
 import java.util.Date;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Song {
-    private int uid;
+    private long uid;
     private final String title;
     private final String artist;
     private final String mp3;
@@ -79,7 +80,7 @@ public class Song {
     }
 
     public Song(UltrastarFile ultrastarFile) {
-        this.uid = 0;
+        this.uid = UUID.randomUUID().getMostSignificantBits();
         this.songType = SongType.getSongTypeByTitle(ultrastarFile.getTitle());
         this.comment = ultrastarFile.getComment();
         if (this.songType != SongType.ORIGINAL_KARAOKE) {
@@ -136,7 +137,7 @@ public class Song {
         this.id = ultrastarFile.getId();
     }
 
-    public int getUid() {
+    public long getUid() {
         return uid;
     }
 
@@ -163,6 +164,22 @@ public class Song {
             return getTitleNormalized().substring(featIndex + 5, lastIndex).trim();
         }
         return StringUtils.EMPTY;
+    }
+
+    public String getAudioType() {
+        if (StringUtils.isEmpty(mp3) || !mp3.contains(".")) {
+            return StringUtils.EMPTY;
+        }
+        String extension = mp3.substring(mp3.indexOf(".")).toLowerCase();
+        return switch (extension) {
+            case "m4a" -> "mp4";
+            case "ogg", "oga" -> "ogg";
+            default -> "mp3";
+        };
+    }
+
+    public boolean hasAudio() {
+        return StringUtils.isNotEmpty(mp3);
     }
 
     public String getMp3() {
@@ -248,7 +265,7 @@ public class Song {
         this.year = year;
     }
 
-    public void setUid(int uid) {
+    public void setUid(long uid) {
         this.uid = uid;
     }
 
@@ -457,5 +474,12 @@ public class Song {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getStartFragment() {
+        if (StringUtils.isEmpty(getStart())) {
+            return StringUtils.EMPTY;
+        }
+        return "#t=" + getStart();
     }
 }

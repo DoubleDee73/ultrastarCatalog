@@ -366,4 +366,15 @@ public class UltrastarFile {
     public void setVersion(String version) {
         this.version = version;
     }
+
+    public void setFixer(String fixer) {
+
+    }
+
+    public void setDuetsingerp1(String p1) {
+        this.p1 = p1;
+    }
+    public void setDuetsingerp2(String p2) {
+        this.p2 = p2;
+    }
 }
