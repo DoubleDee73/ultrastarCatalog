@@ -6,6 +6,7 @@ import com.doubledee.ultrastar.models.Decade;
 import com.doubledee.ultrastar.models.Language;
 import com.doubledee.ultrastar.models.Song;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +29,11 @@ import java.util.stream.Collectors;
 public class UltrastarController {
     @Autowired
     ServletContext context;
+
+    @GetMapping("")
+    public String rootHandler(Model model) {
+        return artistList("", "", "", model);
+    }
 
     @GetMapping("/artists")
     public String artistList(@RequestParam(name = "searchterm", required = false, defaultValue = "") String searchterm,

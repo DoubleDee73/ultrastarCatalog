@@ -91,6 +91,9 @@ public class SongImporter {
                 if (!hasFile) {
                     System.out.println("Invalid cover art: " + file.getAbsolutePath());
                 }
+                if (song.getLanguage() == Language.UNDEFINED) {
+                    System.out.println("Missing language: " + file.getAbsolutePath());
+                }
             }
             /*
             for (Map.Entry<String, String> keyValue : filesToUpdate.entrySet()) {
