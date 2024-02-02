@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>com.doubledee</groupId>
 	<artifactId>ultrastar</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.1</version>
 	<name>UltrastarCatalog</name>
 	<description>Ultrastar Catalog</description>
 	<!--packaging>war</packaging-->
@@ -84,6 +84,20 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>test.App</mainClass>
+							<addDefaultImplementationEntries>
+								true
+							</addDefaultImplementationEntries>
+						</manifest>
+					</archive>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ultrastar Catalog</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="icon" type="image/png" sizes="16x16" href="/ico/ultrastarCatalog-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/ico/ultrastarCatalog-32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/ico/ultrastarCatalog-48.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/ico/ultrastarCatalog-192.png">
+    <link href="https://fonts.googleapis.com/css?family=Fjalla+One&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/75aad18f9f.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+          integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+          crossorigin="anonymous"></script>
+
+
+</head>
+<body>
+<div class="main">
+    <div th:if="${tags.empty}">
+        <span> No Songs Available </span>
+    </div>
+    <div class="flip-card" th:each="tag : ${tags}">
+        <div class="flip-card-inner" th:data-tagname="${tag.tag}"
+             onclick="window.location.href = '/artists?tags=' + this.getAttribute('data-tagname')">
+            <div class="flip-card-front">
+                <img th:src="@{/img/tag/} + ${tag.filename} + '.jpg'" loading="lazy"/>
+                <div class="text">
+                    <h2 th:text=" ${tag.tag}">Tag</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

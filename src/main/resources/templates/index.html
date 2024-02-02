@@ -4,70 +4,179 @@
     <title>Karaoke List</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link href="/css/tagify.css" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="16x16" href="/ico/ultrastarCatalog-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/ico/ultrastarCatalog-32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/ico/ultrastarCatalog-48.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/ico/ultrastarCatalog-192.png">
     <link href="https://fonts.googleapis.com/css?family=Fjalla+One&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/75aad18f9f.js" crossorigin="anonymous"></script>
-
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
-            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
             crossorigin="anonymous"></script>
-    <script src="js/jQuery.loadScroll.js"></script>
-    <script src="js/transition.js"></script>
+    <script src="/js/jQuery.tagify.min.js"></script>
+    <script src="/js/jQuery.loadScroll.js"></script>
+    <script src="/js/transition.js"></script>
+    <script>
+        document.addEventListener('play', function(e){
+            var audios = document.getElementsByTagName('audio');
+            for(var i = 0, len = audios.length; i < len;i++){
+                if(audios[i] != e.target){
+                    audios[i].pause();
+                }
+            }
+        }, true);
+        function openModal(songId) {
+            var modalContent = document.getElementById('song' + songId);
+            $('#modalContent').children().first().replaceWith(modalContent);
+            var modal = document.getElementById('modalLayer');
+            modal.style.display = "block";
+            var button = document.getElementById('pl' + songId);
+            $('#buttonContent').children().first().replaceWith(button);
+        }
+        function closeModal() {
+            var modal = document.getElementById('modalLayer');
+            modal.style.display = "none";
+        }
+        window.onclick = function(event) {
+            var modal = document.getElementById('modalLayer');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        function add2Playlist(songId) {
+            var playlistName = document.getElementById('add2playlist').value;
+            $.ajax({
+                url: '/playlist/' + playlistName + '/' + songId,
+                type: 'PUT',
+                success: function(response){
+                    alert('Playlist saved');
+                },
+                complete: function(){
+                    setTimeout(ajax,1000);
+                }
+            });
+        }
+    </script>
 </head>
 <body>
-<form method="GET">
-    <div class="box">
-        <div class="container-1">
-            <span class="icon"><i class="fa fa-search"></i></span>
-            <input type="search" id="search" name="searchterm" th:placeholder="${search}"/>
+    <div class="main">
+    <form method="GET">
+        <div class="box">
+            <div class="container-1">
+                <span class="icon"><i class="fa fa-search"></i></span>
+                <input type="search" id="search" name="searchterm" th:placeholder="${search}" th:value="${searchterm}"/>
+            </div>
         </div>
-    </div>
-    <div class="select-wrapper">
-        <label for="language">Language</label>
-        <select name="language" id="language" class="select-language" placeholder="Language" onchange="this.form.submit()">
-            <option th:each="temp : ${languages}" th:value="${temp.languageCode}" th:text="${temp.language}"
-                    th:selected="${temp.languageCode} == ${selectedLanguage.languageCode}"></option>
-        </select>
-    </div>
-    <div class="select-wrapper">
-        <label for="decade">Decade</label>
-        <select name="decade" id="decade" class="select-language" placeholder="Decade" onchange="this.form.submit()">
-            <option th:each="temp : ${decades}" th:value="${temp.displayName}" th:text="${temp.displayName}"
-                    th:selected="${temp.displayName} == ${selectedDecade.displayName}"></option>
-        </select>
-    </div>
-</form>
+
+        <div class="searchform">
+            <div class="select-wrapper">
+                <label for="language">Language</label>
+                <select name="language" id="language" class="select-language" placeholder="Language">
+                    <option th:each="temp : ${languages}" th:value="${temp.languageCode}" th:text="${temp.displayLanguage}"
+                            th:selected="${temp.languageCode} == ${selectedLanguage.languageCode}"></option>
+                </select>
+            </div>
+            <div class="select-wrapper">
+                <label for="decade">Decade</label>
+                <select name="decade" id="decade" class="select-language" placeholder="Decade">
+                    <option th:each="temp : ${decades}" th:value="${temp.displayName}" th:text="${temp.displayName}"
+                            th:selected="${temp.displayName} == ${selectedDecade.displayName}"></option>
+                </select>
+            </div>
+            <div class="select-wrapper" th:unless="${playlists.keySet().isEmpty()}">
+                <label for="playlist">Playlists</label>
+                <select name="playlist" id="playlist" class="select-language" placeholder="Playlists">
+                    <option></option>
+                    <option th:each="entry : ${playlists.entrySet()}" th:value="${entry.key}" th:text="${entry.value.name}"
+                            th:selected="${entry.key} == ${selectedPlaylist}"></option>
+                </select>
+            </div>
+            <div class="select-wrapper" style="break-before:column">
+                <label for="decade">Tags</label>
+                <input name="tags" placeholder="write some tags" th:value="${filteredTags}">
+            </div>
+        </div>
+        <div class="box" style="text-align: center">
+            <button onclick="this.form.submit()" class="search">Search</button>
+        </div>
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            var whitelist = /*[[${tagsWhitelist}]]*/ [];
+            var tagInput = $('[name=tags]').tagify({
+                "duplicates":false,
+                "whitelist": whitelist,
+                "enforceWhitelist":true,
+                "editable":false,
+                "originalInputValueFormat": valuesArr => valuesArr.map(item => item.value).join(',')
+            });
+            tagInput.addEventListener('change', onChange);
+            function onChange(e){
+              // outputs a String
+              console.log(e.target.value)
+            }
+            /*]]>*/
+        </script>
+    </form>
+</div>
 <div class="wrapper">
     <nav class="tabs">
         <div class="selector"></div>
         <a href="/artists" class="" th:classappend="${artistsActive} ? active : ''"><i class="fa fa-guitar"></i>Artists</a>
         <a href="/title" class="" th:classappend="${titlesActive} ? active : ''"><i class="fa fa-music"></i>Title</a>
+        <a href="/"><i class="fa fa-tag"></i>Tags</a>
     </nav>
 </div>
 <div th:unless="${songs.empty}">
-    <div class="headline" ><span th:text="${songs.size()}">n</span> songs found.</div>
+    <div class="headline"><span th:text="${songs.size()}">n</span> songs found.</div>
 </div>
 <div class="main">
     <div th:if="${songs.empty}">
         <span> No Songs Available </span>
     </div>
     <div class="flip-card" th:each="song : ${songs}">
-        <div class="flip-card-inner">
+        <div class="flip-card-inner" th:data-songid="${song.uid}" onclick="openModal(this.getAttribute('data-songid'))">
             <div class="flip-card-front">
                 <img th:src="@{/images/} + ${song.uid} + '.jpg'" loading="lazy"/>
-                <h2 th:text=" ${song.artist}">Artist</h2>
-                <p th:text="${song.titleAndVariant}">Title</p>
-            </div>
-            <div class="flip-card-back">
-                <h3 th:text="${song.artist}">Artist</h3>
-                <h4 th:text="${song.title}">Title</h4>
-                <p th:text="${song.language}">Language</p>
-                <p th:text="${song.year}">Year</p>
-                <div th:if="${song.hasAudio}">
-                    <audio controls preload="none">
-                        <source th:src="@{'/audio/'} + ${song.uid} + '.mp3' + ${song.startFragment}" th:type="@{'audio/' + ${song.audioType}}">
-                    </audio>
+                <div class="text">
+                    <h2 th:text=" ${song.artist}">Artist</h2>
+                    <p th:text="${song.titleAndVariant}">Title</p>
                 </div>
             </div>
+            <div class="modal">
+                <div th:id="'song' + ${song.uid}">
+                    <h3 th:text="${song.artist}">Artist</h3>
+                    <h4 th:text="${song.title}">Title</h4>
+                    <p th:text="${song.language}">Language</p>
+                    <p th:text="${song.year}">Year</p>
+                    <div th:if="${song.hasAudio}" id="audioPlayer">
+                        <audio controls preload="none">
+                            <source th:src="@{'/audio/'} + ${song.uid} + '.mp3' + ${song.startFragment}"
+                                    th:type="@{'audio/' + ${song.audioType}}">
+                        </audio>
+                    </div>
+                </div>
+                <div th:id="'pl' + ${song.uid}">
+                    <button id="add2PlaylistCta" th:data-songid="${song.uid}" onclick="add2Playlist(this.getAttribute('data-songid'))">
+                        Add to Playlist
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="modalLayer" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal();">&times;</span>
+            <div id="modalContent"><span>Song-Info</span></div>
+            <div>
+                <p>Manage Playlist</p>
+                <select name="add2playlist" id="add2playlist" class="select-language" placeholder="Playlists">
+                    <option value="">Select Playlist</option>
+                    <option th:each="entry : ${playlists.entrySet()}" th:value="${entry.key}" th:text="${entry.value.name}"
+                            th:selected="${entry.key} == ${selectedPlaylist}"></option>
+                </select>
+            </div>
+            <div id="buttonContent"><button></button></div>
         </div>
     </div>
 </div>

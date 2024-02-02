@@ -1,9 +1,6 @@
 package com.doubledee.ultrastar.importer;
 
-import com.doubledee.ultrastar.models.Language;
-import com.doubledee.ultrastar.models.Song;
-import com.doubledee.ultrastar.models.UltrastarFile;
-import com.doubledee.ultrastar.models.UltrastarTag;
+import com.doubledee.ultrastar.models.*;
 import org.apache.commons.lang3.StringUtils;
 import org.mozilla.universalchardet.UniversalDetector;
 
@@ -12,23 +9,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class SongImporter {
 
     //    public static final String SONGS_PATH = "C:\\Program Files (x86)\\UltraStar Deluxe\\songs\\";
     public static final String SONGS_PATH = "SongDir";
+    public static final String PLAYLISTS_PATH = "PlaylistsDir";
 
     private List<Song> importedSongs = new ArrayList<>();
+    private Map<String, UltrastarPlaylist> playlists = new HashMap<>();
+
+    private String playlistPath;
 
     public SongImporter() {
         File config = new File("config.properties");
+        FileWriter myWriter;
         if (!config.exists()) {
             System.out.println("config.properties were not found in " + config.getParent() + ". Creating new file.");
-            FileWriter myWriter = null;
             try {
                 myWriter = new FileWriter("config.properties");
                 myWriter.write(SONGS_PATH + "1=C:/Program Files (x86)/UltraStar Deluxe/songs/");
+                myWriter.write(PLAYLISTS_PATH + "1=C:/Program Files (x86)/UltraStar Deluxe/playlists/");
                 myWriter.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -43,12 +44,21 @@ public class SongImporter {
         }
         String songsPath;
         int i = 1;
+        File ultraStarSongs = null;
         do {
             songsPath = (String) appProps.get(SONGS_PATH + (i++));
             if (songsPath != null) {
-                init(songsPath);
+                ultraStarSongs = new File(songsPath);
+                if (ultraStarSongs.exists()) {
+                    init(songsPath);
+                }
             }
         } while (songsPath != null);
+        String playlistsPath = (String) appProps.get(PLAYLISTS_PATH);
+        if (StringUtils.isNotEmpty(playlistsPath)) {
+            setPlaylistPath(playlistsPath);
+            initPlaylists(playlistsPath);
+        }
     }
 
     public void init(String path) {
@@ -91,7 +101,7 @@ public class SongImporter {
                 if (!hasFile) {
                     System.out.println("Invalid cover art: " + file.getAbsolutePath());
                 }
-                if (song.getLanguage() == Language.UNDEFINED) {
+                if (song.getLanguage().equals(Language.UNDEFINED)) {
                     System.out.println("Missing language: " + file.getAbsolutePath());
                 }
             }
@@ -122,7 +132,7 @@ public class SongImporter {
         addToContent(content, UltrastarTag.GAP, song.getGap());
         addToContent(content, UltrastarTag.START, song.getStart());
         addToContent(content, UltrastarTag.END, song.getEnd());
-        addToContent(content, UltrastarTag.LANGUAGE, song.getLanguage().getLanguage());
+        addToContent(content, UltrastarTag.LANGUAGE, song.getLanguage());
         addToContent(content, UltrastarTag.YEAR, song.getYear());
         addToContent(content, UltrastarTag.GENRE, song.getGenre());
         addToContent(content, UltrastarTag.COVER, song.getCover());
@@ -203,5 +213,41 @@ public class SongImporter {
             e.printStackTrace();
         }
         return encoding == null ? "Cp1252" : encoding;
+    }
+
+    private void initPlaylists(String playlistsPath) {
+        System.out.println("Initializing playlists in " + playlistsPath);
+        try {
+            List<File> files = Files.walk(Paths.get(playlistsPath))
+                                    .filter(Files::isRegularFile)
+                                    .map(Path::toFile)
+                                    .filter(file -> file.getName().toLowerCase().endsWith(".upl"))
+                                    .toList();
+            for (File file : files) {
+                readPlaylist(file);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("Finished initializing " + playlists.size() + " playlists");
+    }
+
+    private void readPlaylist(File file) {
+        UltrastarPlaylist playlist = new UltrastarPlaylist(file);
+        if (!playlist.getSongs().isEmpty()) {
+            playlists.put(file.getName(), playlist);
+        }
+    }
+
+    public Map<String, UltrastarPlaylist> getPlaylists() {
+        return playlists;
+    }
+
+    public String getPlaylistPath() {
+        return playlistPath;
+    }
+
+    public void setPlaylistPath(String playlistPath) {
+        this.playlistPath = playlistPath;
     }
 }

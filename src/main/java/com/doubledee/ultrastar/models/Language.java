@@ -1,62 +1,63 @@
 package com.doubledee.ultrastar.models;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+public class Language {
+    private int prio;
+    private final String languageCode;
+    private final String displayLanguage;
+    public static final Language UNDEFINED = new Language(Integer.MIN_VALUE, "", "ALL");
+    public static final Language OTHER = new Language(Integer.MAX_VALUE, "other", "Other");
 
-public enum Language {
-    UNDEFINED("ALL", "", Collections.emptyList()),
-    ENGLISH("English", "en", Arrays.asList("Englisch")),
-    GERMAN("Deutsch", "de", Arrays.asList("German")),
-    FRENCH("Français", "fr", Arrays.asList("French", "Französisch")),
-    SPANISH("Español", "es", Arrays.asList("Spanish", "Spanisch")),
-    ITALIAN("Italiano", "it", Arrays.asList("Italian", "Italienisch")),
-    KOREAN("Korean", "ko", Arrays.asList("Korean", "Koreanisch")),
-    CHINESE("Chinese", "zh", Arrays.asList("Mandarin", "Chinese", "Chinesisch")),
-    JAPANESE("Japanese", "jp", Arrays.asList("Japanese", "Japanisch")),
-    PORTUGUESE( "Português", "pt", Arrays.asList("Portuguese"));
+    public Language(LanguageEnum languageEnum) {
+        this.languageCode = languageEnum.getLanguageCode();
+        this.displayLanguage = languageEnum.getDisplayLanguage();
+    }
 
-    String language;
-    String languageCode;
-    List<String> alternatives;
-
-    Language(String language, String languageCode, List<String> alternatives) {
-        this.language = language;
+    public Language(int prio, String languageCode, String displayLanguage) {
+        this.prio = prio;
         this.languageCode = languageCode;
-        this.alternatives = alternatives;
-    }
-
-    public String getLanguage() {
-        return language;
-    }
-
-    public static Language getLanguage(String language) {
-        if (language == null) {
-            return UNDEFINED;
-        }
-        for (Language languageEnum : values()) {
-            if (languageEnum.getLanguage().equalsIgnoreCase(language) || languageEnum.alternatives.stream().anyMatch(language::equalsIgnoreCase)) {
-                return languageEnum;
-            }
-        }
-        return UNDEFINED;
-    }
-
-    public static Language getLanguageByCode(String code) {
-        if (code == null) {
-            return UNDEFINED;
-        }
-        for (Language languageEnum : values()) {
-            if (languageEnum.getLanguageCode().equalsIgnoreCase(code)) {
-                return languageEnum;
-            }
-        }
-        return UNDEFINED;
+        this.displayLanguage = displayLanguage;
     }
 
     public String getLanguageCode() {
         return languageCode;
+    }
+
+    public String getDisplayLanguage() {
+        return displayLanguage;
+    }
+
+    public int getPrio() {
+        return prio;
+    }
+
+    /**
+     * Ranks up the importance of a language by decreasing the prio value.
+     */
+    public void rankUpPrio() {
+        if (prio == Integer.MIN_VALUE || prio == Integer.MAX_VALUE) {
+            return;
+        }
+        prio--;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Language language = (Language) o;
+
+        return new EqualsBuilder().append(languageCode, language.languageCode)
+                                  .append(displayLanguage, language.displayLanguage)
+                                  .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37).append(languageCode).append(displayLanguage).toHashCode();
     }
 }

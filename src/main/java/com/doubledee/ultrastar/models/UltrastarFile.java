@@ -45,6 +45,11 @@ public class UltrastarFile {
     private String relative;
     private String id;
     private String version;
+    private String audio;
+    private String instrumental;
+    private String vocals;
+    private String tags;
+    private String providedby;
 
     public static final String UTF8_BOM = "\uFEFF";
 
@@ -376,5 +381,45 @@ public class UltrastarFile {
     }
     public void setDuetsingerp2(String p2) {
         this.p2 = p2;
+    }
+
+    public String getAudio() {
+        return audio;
+    }
+
+    public void setAudio(String audio) {
+        this.audio = audio;
+    }
+
+    public String getInstrumental() {
+        return instrumental;
+    }
+
+    public void setInstrumental(String instrumental) {
+        this.instrumental = instrumental;
+    }
+
+    public String getVocals() {
+        return vocals;
+    }
+
+    public void setVocals(String vocals) {
+        this.vocals = vocals;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
+
+    public String getProvidedby() {
+        return providedby;
+    }
+
+    public void setProvidedby(String providedby) {
+        this.providedby = providedby;
     }
 }

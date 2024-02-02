@@ -1,25 +1,29 @@
 package com.doubledee.ultrastar.models;
 
+import com.doubledee.ultrastar.utils.HashUtil;
+import com.doubledee.ultrastar.utils.Normalizer;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.Normalizer;
 import java.util.Date;
-import java.util.UUID;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Song {
-    private long uid;
+    private String uid;
     private final String title;
     private final String artist;
     private final String mp3;
     private final String path;
     private final String textFile;
     private SongType songType;
-    private Language language;
+    private Set<Language> languages;
     private String bpm;
     private String gap;
     private String cover;
@@ -49,12 +53,16 @@ public class Song {
     private String medleyendbeat;
     private String relative;
     private String id;
+    private String audio;
+    private String instrumental;
+    private String vocals;
+    private String tags;
+    private String providedby;
     private boolean dirty;
-
     private final static Pattern BRACKET_PATTERN = Pattern.compile("\\[.*?\\]");
 
     public Song(int uid, String title, String artist, String mp3, String path, String textFile) {
-        this.uid = uid;
+        this.uid = Integer.toString(uid);
         this.title = title;
         this.artist = artist;
         this.mp3 = mp3;
@@ -74,13 +82,13 @@ public class Song {
         setYear(rs.getString("strYear"));
         setDateAdded(rs.getTimestamp("dtmDateAdded"));
         setSongType(SongType.getSongTypeByTitle(getTitle()));
-        setLanguage(Language.getLanguage(rs.getString("strLanguage")));
+        setLanguage(LanguageEnum.getDisplayLanguages(rs.getString("strLanguage")));
         setLastUpdate(rs.getTimestamp("dtmUpdated"));
         setVariant(rs.getString("strVariant"));
     }
 
     public Song(UltrastarFile ultrastarFile) {
-        this.uid = UUID.randomUUID().getMostSignificantBits();
+        this.uid = HashUtil.sha1(ultrastarFile.getFilename());
         this.songType = SongType.getSongTypeByTitle(ultrastarFile.getTitle());
         this.comment = ultrastarFile.getComment();
         if (this.songType != SongType.ORIGINAL_KARAOKE) {
@@ -109,7 +117,7 @@ public class Song {
         this.background = ultrastarFile.getBackground();
         this.cover = ultrastarFile.getCover();
         this.video = ultrastarFile.getVideo();
-        this.language = Language.getLanguage(ultrastarFile.getLanguage());
+        this.languages = LanguageEnum.getLanguages(ultrastarFile.getLanguage());
         this.year = ultrastarFile.getYear();
         this.path = ultrastarFile.getPath();
         this.textFile = ultrastarFile.getFilename();
@@ -135,9 +143,14 @@ public class Song {
         this.medleyendbeat = ultrastarFile.getMedleyendbeat();
         this.relative = ultrastarFile.getRelative();
         this.id = ultrastarFile.getId();
+        this.tags = ultrastarFile.getTags();
+        this.audio = ultrastarFile.getAudio();
+        this.instrumental = ultrastarFile.getInstrumental();
+        this.vocals = ultrastarFile.getVocals();
+        this.providedby = ultrastarFile.getProvidedby();
     }
 
-    public long getUid() {
+    public String getUid() {
         return uid;
     }
 
@@ -150,11 +163,11 @@ public class Song {
     }
 
     public String getArtistNormalized() {
-        return Normalizer.normalize(artist, Normalizer.Form.NFD).toLowerCase();
+        return Normalizer.normalize(artist);
     }
 
     public String getTitleNormalized() {
-        return Normalizer.normalize(title, Normalizer.Form.NFD).toLowerCase();
+        return Normalizer.normalize(title);
     }
 
     public String getFeaturedArtist() {
@@ -213,16 +226,15 @@ public class Song {
         this.dateAdded = dateAdded;
     }
 
-    public Language getLanguage() {
-        return language;
+    public String getLanguage() {
+        return languages.stream().map(Language::getDisplayLanguage).collect(Collectors.joining(", "));
+    }
+    public Set<Language> getLanguages() {
+        return languages;
     }
 
-    public void setLanguage(Language language) {
-        this.language = language;
-    }
-
-    public String getLanguageCode() {
-        return getLanguage().getLanguageCode();
+    public void setLanguage(Set<Language> languages) {
+        this.languages = languages;
     }
 
     public String getBpm() {
@@ -265,7 +277,7 @@ public class Song {
         this.year = year;
     }
 
-    public void setUid(long uid) {
+    public void setUid(String uid) {
         this.uid = uid;
     }
 
@@ -314,6 +326,18 @@ public class Song {
         int year = NumberUtils.toInt(getYear());
         Decade decadeEnum = Decade.getDecadeByString(decade);
         return year >= decadeEnum.getStartYear() && year < (decadeEnum.getStartYear() + 10);
+    }
+
+    public boolean containsTags(Set<TagsEnum> tags) {
+        if (CollectionUtils.isEmpty(tags)) {
+            return true;
+        }
+        if (StringUtils.isEmpty(getTags())) {
+            return tags.contains(TagsEnum.UNTAGGED);
+        }
+        Set<TagsEnum> tagsOfSong = TagsEnum.getTagsByString(getTags());
+        tagsOfSong.retainAll(tags);
+        return !tagsOfSong.isEmpty();
     }
 
     public String getGap() {
@@ -476,10 +500,65 @@ public class Song {
         this.id = id;
     }
 
+    public String getAudio() {
+        return audio;
+    }
+
+    public void setAudio(String audio) {
+        this.audio = audio;
+    }
+
+    public String getInstrumental() {
+        return instrumental;
+    }
+
+    public void setInstrumental(String instrumental) {
+        this.instrumental = instrumental;
+    }
+
+    public String getVocals() {
+        return vocals;
+    }
+
+    public void setVocals(String vocals) {
+        this.vocals = vocals;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
+
+    public String getProvidedby() {
+        return providedby;
+    }
+
+    public void setProvidedby(String providedby) {
+        this.providedby = providedby;
+    }
+
     public String getStartFragment() {
         if (StringUtils.isEmpty(getStart())) {
             return StringUtils.EMPTY;
         }
         return "#t=" + getStart();
+    }
+
+    public String getArtistAndTitle() {
+        return artist + " : " + title;
+    }
+
+    public boolean containsLanguage(String languageCode) {
+        return languages.stream().map(Language::getLanguageCode).anyMatch(it -> it.equalsIgnoreCase(languageCode));
+    }
+
+    public boolean isInPlaylist(UltrastarPlaylist playlist) {
+        if (playlist == null || CollectionUtils.isEmpty(playlist.getSongs())) {
+            return false;
+        }
+        return playlist.getSongs().stream().anyMatch(song -> song.equals(getArtistAndTitle()));
     }
 }

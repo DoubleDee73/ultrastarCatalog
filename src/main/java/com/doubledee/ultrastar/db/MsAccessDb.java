@@ -29,7 +29,7 @@ public class MsAccessDb {
             ResultSet rs = statement.executeQuery("Select * from tblSongs");
             while (rs.next()) {
                 Song song = new Song(rs);
-                songs.put(song.getUid(), song);
+                songs.put(Long.parseLong(song.getUid()), song);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -76,7 +76,7 @@ public class MsAccessDb {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setString(i++, song.getTitle());
             preparedStatement.setString(i++, song.getArtist());
-            preparedStatement.setString(i++, song.getLanguage() != null ? song.getLanguage().getLanguage() : null);
+            preparedStatement.setString(i++, song.getLanguage() != null ? song.getLanguage() : null);
             preparedStatement.setString(i++, song.getMp3());
             preparedStatement.setString(i++, song.getBpm());
             preparedStatement.setString(i++, song.getCover());
@@ -91,14 +91,14 @@ public class MsAccessDb {
             }
             preparedStatement.setDate(i++, new Date(System.currentTimeMillis()));
             preparedStatement.setString(i++, song.getVariant());
-            preparedStatement.setLong(i++, song.getUid());
+            preparedStatement.setLong(i++, Long.parseLong(song.getUid()));
 
             if (preparedStatement.executeUpdate() > 0) {
                 ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
                 if (generatedKeys.next()) {
-                    song.setUid(generatedKeys.getInt(1));
+                    song.setUid("" + generatedKeys.getInt(1));
                 }
-                getSongs().put(song.getUid(), song);
+                getSongs().put(Long.parseLong(song.getUid()), song);
             }
         } catch (SQLException e) {
             e.printStackTrace();

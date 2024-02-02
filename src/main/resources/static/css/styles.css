@@ -6,7 +6,8 @@
 body {
   font-family: 'Fjalla One', sans-serif;
   font-size: 22pt;
-  background-color: #222;
+  background-color: #8BC6EC;
+  background-image: linear-gradient(135deg, #314857 0%, #4d5085 100%);
 }
 
 .sync {
@@ -33,9 +34,8 @@ body {
 }
 
 .box{
+  width: 600px;
   margin: 10px auto;
-  width: 400px;
-  height: 60px;
 }
 
 .wrapper{
@@ -53,12 +53,11 @@ body {
 .container-1 input#search{
   width: 600px;
   height: 60px;
-  background: #2b303b;
   border: none;
   font-size: 1.5em;
   float: left;
   color: #63717f;
-  padding-left: 45px;
+  padding-left: 1.5em;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
@@ -82,8 +81,7 @@ h2 {
   background-color: transparent;
   width: 400px;
   height: 400px;
-  border: 1px solid #f1f1f1;
-  perspective: 1000px; /* Remove this if you don't want the 3D effect */
+  margin: 5px;
 }
 
 /* This container is needed to position the front and back side */
@@ -92,40 +90,39 @@ h2 {
   width: 100%;
   height: 100%;
   text-align: center;
-  transition: transform 0.5s;
-  transform-style: preserve-3d;
 }
 
-/* Do an horizontal flip when you move the mouse over the flip box container */
-.flip-card:hover .flip-card-inner {
-  transform: rotateY(180deg);
-}
-
-/* Position the front and back side */
-.flip-card-front, .flip-card-back {
+.flip-card-front {
   position: absolute;
   width: 100%;
   height: 100%;
-  backface-visibility: hidden;
-  padding-top: 15px;
-}
-
-/* Style the front side (fallback if image is missing) */
-.flip-card-front {
-  background-color: #bbb;
+  background-color: #222;
   color: black;
+  cursor: pointer;
+  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.5);
+  border-radius: 0.5em;
 }
 
-/* Style the back side */
-.flip-card-back {
-  background-color: dodgerblue;
-  color: white;
-  transform: rotateY(180deg);
+.flip-card-front img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0.5em;
 }
 
-img {
-  width: 200px;
-  height: 200px;
+.flip-card-front .text {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 24px;
+    text-align: center;
+    border-radius: 0 0 0.5em 0.5em;
 }
 
 .wrapper{
@@ -186,7 +183,12 @@ img {
   background: linear-gradient(45deg, #05abe0 0%,#8200f4 100%);
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#05abe0', endColorstr='#8200f4',GradientType=1 );
 }
-
+.searchform {
+    width: 800px;
+    column-count: 2;
+    margin: 30px;
+    vertical-align: top;
+}
 select {
   -moz-appearance: none;
   -webkit-appearance: none;
@@ -197,7 +199,7 @@ select {
   padding-left: 10px;
   background: #2b303bf;
   font-family: 'Roboto', sans-serif;
-  font-size: 1.5em;
+  font-size: 1.3em;
   box-shadow: 2px 2px 5px 1px rgba(0,0,0,0.3);
   border-radius: 3px;
   outline: none;
@@ -215,8 +217,8 @@ select:focus::-ms-value {
 
 .select-wrapper {
   position: relative;
-  width: 200px;
-  margin:20px auto;
+  width: 300px;
+  margin:10px auto;
   color: #ddd;
 }
 
@@ -225,6 +227,70 @@ select:focus::-ms-value {
   font-size: 20px;
   pointer-events: none;
   position: absolute;
-  right: 15px;
+  right: 10px;
   top: 10px;
+}
+
+.tagify {
+  min-width: 300px;
+}
+.select-wrapper .tagify {
+  font-size: 0.9em;
+}
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+button {
+    cursor: pointer;
+    outline: 0;
+    color: #fff;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    display: inline-block;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: center;
+    border: 1px solid transparent;
+    padding: 0.3em 0.8em;
+    font-size: 1em;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    :hover {
+        color: #fff;
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
 }
