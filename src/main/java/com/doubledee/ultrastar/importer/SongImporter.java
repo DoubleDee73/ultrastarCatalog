@@ -29,6 +29,7 @@ public class SongImporter {
             try {
                 myWriter = new FileWriter("config.properties");
                 myWriter.write(SONGS_PATH + "1=C:/Program Files (x86)/UltraStar Deluxe/songs/");
+                myWriter.write(System.lineSeparator());
                 myWriter.write(PLAYLISTS_PATH + "1=C:/Program Files (x86)/UltraStar Deluxe/playlists/");
                 myWriter.close();
             } catch (IOException e) {

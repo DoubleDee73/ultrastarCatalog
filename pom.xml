@@ -8,7 +8,7 @@
 		<version>3.2.1</version>
 	</parent>
 	<groupId>com.doubledee</groupId>
-	<artifactId>ultrastar</artifactId>
+	<artifactId>ultrastarCatalog</artifactId>
 	<version>0.1</version>
 	<name>UltrastarCatalog</name>
 	<description>Ultrastar Catalog</description>
