@@ -13,6 +13,9 @@ Keep in mind, this is still at an early stage, so right now, you can:
 - Listen to the audio
 - Add songs to existing playlists
 
+## What does the software do?
+The software will scan through your songs folder and read the ultrastar-txt files to build up the library. A webserver will be started that can be reached within your wifi network. Images and audio files will be streamed from your songs folder. When someone adds songs to playlists, the software will do that directly on the upl-file.
+
 # What do you need?
 - Java 17
 - the java.exe from your bin folder should be in your environment variables
@@ -24,7 +27,14 @@ Keep in mind, this is still at an early stage, so right now, you can:
 - open your terminal/console and switch to the directory you have copied the files to and start the jar with:
 - java -jar ultrastarCatalog-0.1.jar
   - The call above will use the port 8080 by default. You can optionally append --server.port=8081 to change the port to 8081 (obviously you can use any port you like), if 8080 is already in use on your machine.
-- if everything is fine, you can open your browser with http://localhost:8080/
+- if everything is fine, you can open your browser with http://localhost:8080/ to check if it works
+- Find out the IP address of the machine on which the web server has been started, as "localhost" is only accessible from that particular computer
+  - In Windows, you can do that by opening a command line and type in "ipconfig". For example: http://192.168.1.100:8080
 
 If you want your party to be able to access this, obviously they have to be in the same wifi as the server.
 Alternatively, you could also create a dynamic DNS host name, and configure port-forwarding of port 8080 in your router to point to the computer where the web app is running.
+
+# Current quirks/limitations
+- Currently USDX will only load playlists upon start up. If people add songs to playlists while the game is running, the songs will not show up in the playlists until restart
+- A song can only be added once per playlist. This is a measurement to avoid people spamming your playlist. This way, a playlist can only be as long as you have songs in your library
+- When you are playing a song, it will continue to play until you either hit the pause button (duh!) or when you open up the song details of another song
