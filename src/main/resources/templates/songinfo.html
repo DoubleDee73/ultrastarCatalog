@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div class="modal">
+    <div th:id="'song' + ${song.uid}">
+        <h3 th:text="${song.artist}">Artist</h3>
+        <h4 th:text="${song.title}">Title</h4>
+        <p th:text="${song.language}">Language</p>
+        <p th:text="${song.year}">Year</p>
+        <div th:if="${song.hasAudio}" id="audioPlayer">
+            <audio controls preload="none">
+                <source th:src="@{'/audio/'} + ${song.uid} + '.mp3' + ${song.startFragment}"
+                        th:type="@{'audio/' + ${song.audioType}}">
+            </audio>
+        </div>
+    </div>
+    <div th:id="'pl' + ${song.uid}">
+        <button id="add2PlaylistCta" th:data-songid="${song.uid}" onclick="add2Playlist(this.getAttribute('data-songid'))">
+            Add to Playlist
+        </button>
+    </div>
+</div>
+</html>

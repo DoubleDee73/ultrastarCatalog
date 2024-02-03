@@ -37,6 +37,16 @@ public class UltrastarController {
         return "main";
     }
 
+    @GetMapping("/reload")
+    public String reload(Model model) {
+        UltrastarApplication.init(new SongImporter());
+        List<Map.Entry<TagsEnum, Integer>> list = new ArrayList<>(getTagsList().entrySet());
+        list.sort(Map.Entry.comparingByValue());
+        Collections.reverse(list);
+        model.addAttribute("tags", list.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+        return "main";
+    }
+
     @GetMapping("/artists")
     public String artistList(@RequestParam(name = "searchterm", required = false, defaultValue = "") String searchterm,
                              @RequestParam(name = "language", required = false, defaultValue = "") String language,

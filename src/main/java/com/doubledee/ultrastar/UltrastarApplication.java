@@ -30,6 +30,10 @@ public class UltrastarApplication {
     public static void main(String[] args) {
         SpringApplication.run(UltrastarApplication.class, args);
         SongImporter songImporter = new SongImporter();
+        init(songImporter);
+    }
+
+    public static void init(SongImporter songImporter) {
         SONGS = songImporter.getImportedSongs()
                             .stream()
                             .collect(Collectors.toMap(Song::getUid, Function.identity()));

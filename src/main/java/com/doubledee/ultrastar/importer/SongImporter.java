@@ -1,5 +1,6 @@
 package com.doubledee.ultrastar.importer;
 
+import com.doubledee.ultrastar.db.SqLiteDb;
 import com.doubledee.ultrastar.models.*;
 import org.apache.commons.lang3.StringUtils;
 import org.mozilla.universalchardet.UniversalDetector;
@@ -15,9 +16,12 @@ public class SongImporter {
     //    public static final String SONGS_PATH = "C:\\Program Files (x86)\\UltraStar Deluxe\\songs\\";
     public static final String SONGS_PATH = "SongDir";
     public static final String PLAYLISTS_PATH = "PlaylistsDir";
+    public static final String ULTRASTAR_DB = "UltrastarDb";
+    public static final String ULTRASTAR_DB_LEGACY = "UltrastarDbLegacy";
 
     private List<Song> importedSongs = new ArrayList<>();
     private Map<String, UltrastarPlaylist> playlists = new HashMap<>();
+    private Map<String, List<Score>> scores = new HashMap<>();
 
     private String playlistPath;
 
@@ -30,7 +34,7 @@ public class SongImporter {
                 myWriter = new FileWriter("config.properties");
                 myWriter.write(SONGS_PATH + "1=C:/Program Files (x86)/UltraStar Deluxe/songs/");
                 myWriter.write(System.lineSeparator());
-                myWriter.write(PLAYLISTS_PATH + "1=C:/Program Files (x86)/UltraStar Deluxe/playlists/");
+                myWriter.write(PLAYLISTS_PATH + "=C:/Program Files (x86)/UltraStar Deluxe/playlists/");
                 myWriter.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -38,6 +42,7 @@ public class SongImporter {
         }
         Properties appProps = new Properties();
         try {
+            System.out.println("Loading config from " + config.getAbsolutePath());
             appProps.load(new FileInputStream(config.getAbsolutePath()));
         } catch (IOException e) {
             System.out.println(e.getMessage());
@@ -56,9 +61,79 @@ public class SongImporter {
             }
         } while (songsPath != null);
         String playlistsPath = (String) appProps.get(PLAYLISTS_PATH);
+        String dbPath = (String) appProps.get(ULTRASTAR_DB);
+        if (StringUtils.isEmpty(playlistsPath) || StringUtils.isEmpty(dbPath)) {
+            System.out.println(
+                    PLAYLISTS_PATH + " and/or " + ULTRASTAR_DB + " property not found. Trying to guess them.");
+            guessMissingPaths(config, appProps, StringUtils.isEmpty(playlistsPath), StringUtils.isEmpty(dbPath));
+            playlistsPath = (String) appProps.get(PLAYLISTS_PATH);
+            dbPath = (String) appProps.get(ULTRASTAR_DB);
+
+        }
         if (StringUtils.isNotEmpty(playlistsPath)) {
             setPlaylistPath(playlistsPath);
             initPlaylists(playlistsPath);
+        } else {
+            System.out.println("No playlist found in " + PLAYLISTS_PATH);
+        }
+        if (StringUtils.isNotEmpty(dbPath)) {
+            SqLiteDb sqLiteDb = new SqLiteDb();
+            List<Score> ultrastarScores = sqLiteDb.fetchSongScores(dbPath);
+            /*
+            This could work, but storing from the legacy to the actual db doesn't work properly, as the artist
+            and title are blobs in SQlite, and the bytestreams that end up in the database seem to break it
+            String legacyDb = (String)appProps.get(ULTRASTAR_DB_LEGACY);
+            if (legacyDb != null) {
+                ultrastarScores.addAll(sqLiteDb.migrateScores(ultrastarScores, legacyDb, dbPath));
+            }
+            */
+            scores = attachCatalogIds(ultrastarScores);
+        }
+    }
+
+    private void guessMissingPaths(File config, Properties appProps, boolean playlistMissing, boolean dbMissing) {
+        File playlist;
+        File dbPath;
+        String songdir = (String) appProps.get(SONGS_PATH + 1);
+        if (songdir == null) {
+            System.out.println("The songdir was not configured. Can't deduce playlist path from that");
+            return;
+        }
+        File songPath = new File(songdir);
+        if (!songPath.exists()) {
+            System.out.println("The songdir was not found. Can't deduce playlist path from that");
+            return;
+        }
+        if (playlistMissing) {
+            playlist = new File(songPath.getParent() + "/playlists");
+        } else {
+            playlist = null;
+        }
+        if (dbMissing) {
+            dbPath = new File(songPath.getParent() + "/Ultrastar.db");
+        } else {
+            dbPath = null;
+        }
+        if (playlist != null && playlist.exists() || (dbPath != null && dbPath.exists())) {
+            FileWriter fw;
+            try {
+                fw = new FileWriter(config.getAbsolutePath(), true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                if (playlist != null) {
+                    bw.newLine();
+                    bw.write(PLAYLISTS_PATH + "=" + playlist.getAbsolutePath().replace("\\", "\\\\"));
+                    appProps.put(PLAYLISTS_PATH, playlist.getAbsolutePath());
+                }
+                if (dbPath != null) {
+                    bw.newLine();
+                    bw.write(ULTRASTAR_DB + "=" + dbPath.getAbsolutePath().replace("\\", "\\\\"));
+                    appProps.put(ULTRASTAR_DB, dbPath.getAbsolutePath());
+                }
+                bw.newLine();
+                bw.close();
+            } catch (IOException e) {
+                System.out.println("Writing to config failed");
+            }
         }
     }
 
@@ -250,5 +325,34 @@ public class SongImporter {
 
     public void setPlaylistPath(String playlistPath) {
         this.playlistPath = playlistPath;
+    }
+
+
+    private Map<String, List<Score>> attachCatalogIds(List<Score> ultrastarScores) {
+        Map<String, List<Score>> usdx2cat = new HashMap<>();
+        for (Score score : ultrastarScores) {
+            if (score.getCatalogId() == null) {
+                String scoreArtistTitle = score.getArtist() + " : " + score.getTitle();
+                Song catSong = getImportedSongs().stream()
+                                                 .filter(song -> song.getArtistAndTitle()
+                                                                     .equalsIgnoreCase(scoreArtistTitle))
+                                                 .findFirst()
+                                                 .orElse(null);
+                if (catSong != null) {
+                    usdx2cat.put(catSong.getUid(), new ArrayList<>());
+                    ultrastarScores.stream()
+                                   .filter(sc -> sc.getUltrastarId() == score.getUltrastarId())
+                                   .forEach(it -> it.setCatalogId(
+                                           catSong.getUid()));
+                }
+            }
+            List<Score> scoresPerSong = usdx2cat.get(score.getCatalogId());
+            if (scoresPerSong != null) {
+                scoresPerSong.add(score);
+            } else {
+                System.out.println("Could not attach score of " + score);
+            }
+        }
+        return usdx2cat;
     }
 }
