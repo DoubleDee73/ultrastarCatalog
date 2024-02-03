@@ -1,8 +1,21 @@
+# What's ultrastarCatalog?
 This is a small web app (Spring Boot / Tomcat) to show the catalog of your Ultrastar library.
 
-What do you need?
-Java 17
-the java.exe from your bin folder should be in your environment variables
+The intention is, that when you have a Ultrastar-Party, you can start up this little web application and have the attendees of your party open up the URL on their mobile devices. This way, everyone can browse through the songs, that you can offer.
+
+![image](https://github.com/DoubleDee73/ultrastarCatalog/assets/26616916/6f9472d8-fbf5-42ac-8f44-24ef4b02e6cd)
+
+## What can the app do?
+Keep in mind, this is still at an early stage, so right now, you can:
+- Search by artist, title or tag
+- Sort the search results by either artist or title
+- Filter by language, decade, tags and/or playlist
+- Listen to the audio
+- Add songs to existing playlists
+
+# What do you need?
+- Java 17
+- the java.exe from your bin folder should be in your environment variables
 
 # How to start it
 - Copy both files somewhere
