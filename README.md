@@ -38,3 +38,9 @@ Alternatively, you could also create a dynamic DNS host name, and configure port
 - Currently USDX will only load playlists upon start up. If people add songs to playlists while the game is running, the songs will not show up in the playlists until restart
 - A song can only be added once per playlist. This is a measurement to avoid people spamming your playlist. This way, a playlist can only be as long as you have songs in your library
 - When you are playing a song, it will continue to play until you either hit the pause button (duh!) or when you open up the song details of another song
+
+# Support
+If you like this little app, feel free (but not pressured!) to buy me coffee. Any support is very much appreciated!
+
+<a target="_blank" rel="noopener noreferrer" href="https://www.buymeacoffee.com/DoubleDee73"><img src="https://private-user-images.githubusercontent.com/26616916/302110878-ed72f62f-5c9c-4065-b50c-736b89f0fca2.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MDcwNTgxMTMsIm5iZiI6MTcwNzA1NzgxMywicGF0aCI6Ii8yNjYxNjkxNi8zMDIxMTA4NzgtZWQ3MmY2MmYtNWM5Yy00MDY1LWI1MGMtNzM2Yjg5ZjBmY2EyLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDAyMDQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwMjA0VDE0NDMzM1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTVkMTY3NWY0M2I5YjAxMDFiOGVmNjFhZWFmMzdiNDBiMTdhNDk3YmU2Mjc3ZDVmOTA0YWRlOGQ5N2MzNzA0NWImWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.sOQyyhEegfZ0lMjn36rwzmKzZWW7Ft9rc0fRJhHVNqc" alt="image" style="max-width: 100%; width: 200px;"></a>
+
