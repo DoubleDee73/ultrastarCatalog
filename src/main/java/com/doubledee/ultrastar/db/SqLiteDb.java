@@ -1,14 +1,14 @@
 package com.doubledee.ultrastar.db;
 
 import com.doubledee.ultrastar.models.Score;
-import com.doubledee.ultrastar.models.Song;
-import org.apache.commons.codec.binary.Hex;
 
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SqLiteDb {
     public List<Score> fetchSongScores(String dbFile) {
@@ -17,7 +17,7 @@ public class SqLiteDb {
         // create a database connection
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile);
-            String sql = "select s.id, hex(s.artist), s.artist, hex(s.title), s.title, hex(sc.player), sc.player, " +
+            String sql = "select s.id, s.artist, s.title, sc.player, " +
                     "sc.difficulty, sc.score, s.TimesPlayed, sc.date from us_songs s " +
                     "inner join us_scores sc on s.id = sc.SongId";
             Statement statement = connection.createStatement();
@@ -29,7 +29,7 @@ public class SqLiteDb {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return scores;
+        return scores.stream().distinct().collect(Collectors.toList());
     }
 
     public List<Score> migrateScores(List<Score> ultrastarScores, String legacyDb, String currentDb) {
@@ -37,6 +37,7 @@ public class SqLiteDb {
         List<Score> migratedScores = new ArrayList<>();
         for (Score score : legacyScores) {
             if (ultrastarScores.stream().anyMatch(it -> scoresAreEqual(it, score))) {
+                System.out.println(score + " was already found in the target DB. Skipping the score");
                 continue;
             }
             migratedScores.add(persistLegacyScore(score, currentDb));
@@ -47,19 +48,23 @@ public class SqLiteDb {
     private Score persistLegacyScore(Score score, String currentDb) {
         try {
             Connection currentConnection = DriverManager.getConnection("jdbc:sqlite:" + currentDb);
-            String sql = "select * from us_songs where Hex(Artist)=? and Hex(Title)=?";
+            String sql = "select * from us_songs where Artist=? and Title=?";
             PreparedStatement statement = currentConnection.prepareStatement(sql);
-            statement.setString(1, enhex(score.getArtist()));
-            statement.setString(2, enhex(score.getTitle()));
+            Reader artistReader = createCharStream(score.getArtist());
+            Reader titleReader = createCharStream(score.getTitle());
+            statement.setCharacterStream(1, artistReader, score.getArtist().length() + 1);
+            statement.setCharacterStream(2, titleReader, score.getTitle().length() + 1);
             ResultSet resultSet = statement.executeQuery();
             int songId;
             if (resultSet.next()) {
                 songId = resultSet.getInt(1);
             } else {
+                artistReader.reset();
+                titleReader.reset();
                 statement = currentConnection.prepareStatement("INSERT INTO us_songs (Artist, Title, TimesPlayed) " +
                                                                        "VALUES (?, ?, ?)");
-                statement.setBytes(1, score.getArtistBytes());
-                statement.setBytes(2, score.getTitleBytes());
+                statement.setCharacterStream(1, artistReader, score.getArtist().length() + 1);
+                statement.setCharacterStream(2, titleReader, score.getTitle().length() + 1);
                 statement.setInt(3, score.getTimesPlayed());
                 statement.execute();
                 resultSet = currentConnection.createStatement().executeQuery("SELECT Max(id) from us_songs");
@@ -71,30 +76,24 @@ public class SqLiteDb {
                                                                    "(?, ?, ?, ?, ?)");
             statement.setInt(1, songId);
             statement.setInt(2, score.getDifficulty());
-            statement.setBytes(3, score.getPlayerBytes());
+            statement.setCharacterStream(3, createCharStream(score.getPlayer()), score.getPlayer().length() + 1);
             statement.setInt(4, score.getScore());
             statement.setLong(5, score.getDate().getTime() / 1000);
             statement.execute();
             score.setUltrastarId(songId);
             currentConnection.close();
-        } catch (SQLException e) {
+            System.out.println(score + " was successfully imported into the new score database.");
+        } catch (SQLException | IOException e) {
+            System.out.println("Something went wrong while trying to persist score " + score);
             throw new RuntimeException(e);
         }
         return score;
     }
-
-    private String enhex(String text) {
-        return Hex.encodeHexString(text.getBytes(StandardCharsets.UTF_8)).toUpperCase();
-    }
-
     private boolean scoresAreEqual(Score newScore, Score oldScore) {
         return oldScore.toString().equalsIgnoreCase(newScore.toString());
     }
 
-    private byte[] getBytesFromText(String text) {
-        byte[] withoutNullByte = text.getBytes();
-        byte[] returnArray = new byte[withoutNullByte.length + 1];
-        System.arraycopy(withoutNullByte, 0, returnArray, 0, withoutNullByte.length);
-        return withoutNullByte;
+    private Reader createCharStream(String text) {
+        return new StringReader(text + "\0");
     }
 }

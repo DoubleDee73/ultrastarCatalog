@@ -2,6 +2,7 @@ package com.doubledee.ultrastar.importer;
 
 import com.doubledee.ultrastar.db.SqLiteDb;
 import com.doubledee.ultrastar.models.*;
+import com.doubledee.ultrastar.utils.HashUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.mozilla.universalchardet.UniversalDetector;
 
@@ -16,6 +17,7 @@ public class SongImporter {
     //    public static final String SONGS_PATH = "C:\\Program Files (x86)\\UltraStar Deluxe\\songs\\";
     public static final String SONGS_PATH = "SongDir";
     public static final String PLAYLISTS_PATH = "PlaylistsDir";
+    public static final String LITE = "lite";
     public static final String ULTRASTAR_DB = "UltrastarDb";
     public static final String ULTRASTAR_DB_LEGACY = "UltrastarDbLegacy";
 
@@ -24,6 +26,12 @@ public class SongImporter {
     private Map<String, List<Score>> scores = new HashMap<>();
 
     private String playlistPath;
+    private boolean lite;
+
+    private static final Set<String> IGNORE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(".git",
+                                                                                                      ".gitignore",
+                                                                                                      ".idea",
+                                                                                                      "_temp")));
 
     public SongImporter() {
         File config = new File("config.properties");
@@ -44,6 +52,9 @@ public class SongImporter {
         try {
             System.out.println("Loading config from " + config.getAbsolutePath());
             appProps.load(new FileInputStream(config.getAbsolutePath()));
+            for (Map.Entry<Object, Object> propEntry : appProps.entrySet()) {
+                System.out.println("Key: " + propEntry.getKey() + " = " + propEntry.getValue());
+            }
         } catch (IOException e) {
             System.out.println(e.getMessage());
             throw new RuntimeException(e);
@@ -61,8 +72,10 @@ public class SongImporter {
             }
         } while (songsPath != null);
         String playlistsPath = (String) appProps.get(PLAYLISTS_PATH);
+        boolean lite = "true".equalsIgnoreCase((String)appProps.get(LITE));
+        setLite(lite);
         String dbPath = (String) appProps.get(ULTRASTAR_DB);
-        if (StringUtils.isEmpty(playlistsPath) || StringUtils.isEmpty(dbPath)) {
+        if (!lite && (StringUtils.isEmpty(playlistsPath) || StringUtils.isEmpty(dbPath))) {
             System.out.println(
                     PLAYLISTS_PATH + " and/or " + ULTRASTAR_DB + " property not found. Trying to guess them.");
             guessMissingPaths(config, appProps, StringUtils.isEmpty(playlistsPath), StringUtils.isEmpty(dbPath));
@@ -70,23 +83,27 @@ public class SongImporter {
             dbPath = (String) appProps.get(ULTRASTAR_DB);
 
         }
-        if (StringUtils.isNotEmpty(playlistsPath)) {
+        if (!lite && StringUtils.isNotEmpty(playlistsPath)) {
             setPlaylistPath(playlistsPath);
             initPlaylists(playlistsPath);
         } else {
             System.out.println("No playlist found in " + PLAYLISTS_PATH);
         }
         if (StringUtils.isNotEmpty(dbPath)) {
+            Path databasePath = Paths.get(dbPath);
+            if (!Files.exists(databasePath)) {
+                System.out.println("Something is wrong with the songs path " + databasePath);
+            }
             SqLiteDb sqLiteDb = new SqLiteDb();
             List<Score> ultrastarScores = sqLiteDb.fetchSongScores(dbPath);
             /*
             This could work, but storing from the legacy to the actual db doesn't work properly, as the artist
             and title are blobs in SQlite, and the bytestreams that end up in the database seem to break it
-            String legacyDb = (String)appProps.get(ULTRASTAR_DB_LEGACY);
-            if (legacyDb != null) {
-                ultrastarScores.addAll(sqLiteDb.migrateScores(ultrastarScores, legacyDb, dbPath));
-            }
             */
+            //String legacyDb = (String)appProps.get(ULTRASTAR_DB_LEGACY);
+            //if (legacyDb != null) {
+            //    ultrastarScores.addAll(sqLiteDb.migrateScores(ultrastarScores, legacyDb, dbPath));
+            //}
             scores = attachCatalogIds(ultrastarScores);
         }
     }
@@ -137,28 +154,92 @@ public class SongImporter {
         }
     }
 
+    private List<File> retrieveFilesFromPath(String path) throws IOException {
+        if (isIgnored(path)) {
+            System.out.println("Skipping " + path);
+            return Collections.emptyList();
+        }
+        Path songPath = Paths.get(path);
+        File pathAsFile = songPath.toFile();
+        boolean hasTxt = Arrays.stream(pathAsFile.listFiles())
+                               .map(subFile -> subFile.getName())
+                               .anyMatch(filename -> filename.endsWith(".txt"));
+        int size = -1;
+        if (pathAsFile.isDirectory()) {
+            if (!hasTxt) {
+                if (Arrays.stream(pathAsFile.listFiles()).anyMatch(File::isDirectory)) {
+                    System.out.println("Initializing songs in " + path);
+                    size = pathAsFile.listFiles().length;
+                } else {
+                    System.out.println("TXT file is missing in " + path);
+                }
+            }
+        }
+
+        int lastStep = 0;
+        int counter = 0;
+        List<File> files = new ArrayList<>();
+        for (File folder : pathAsFile.listFiles()) {
+            counter++;
+
+            if (isIgnored(folder.getName())) {
+                continue;
+            }
+            if (folder.isDirectory()) {
+                double percentDone = ((double) counter) / size;
+                int percentRounded = ((int) (percentDone * 100));
+                if (percentRounded % 10 == 0 && percentRounded > lastStep) {
+                    System.out.println("Preparing folder " + pathAsFile.getPath() + ": " + percentRounded + "% done");
+                    lastStep = percentRounded;
+                }
+                files.addAll(retrieveFilesFromPath(folder.getAbsolutePath()));
+            } else {
+                if (folder.getName().toLowerCase().endsWith(".txt")) {
+                    files.add(folder);
+                }
+            }
+        }
+        return files;
+    }
+
+    private boolean isIgnored(String name) {
+        return IGNORE.stream().anyMatch(name::equalsIgnoreCase);
+    }
+
     public void init(String path) {
         try {
-            System.out.println("Initializing songs in " + path);
-            List<File> files = Files.walk(Paths.get(path))
-                                    .filter(Files::isRegularFile)
-                                    .map(Path::toFile)
-                                    .filter(file -> !file.getParent().endsWith("\\_temp"))
-                                    .filter(file -> file.getName().toLowerCase().endsWith(".txt"))
-                                    .toList();
+            List<File> files = retrieveFilesFromPath(path);
             if (files.isEmpty()) {
                 System.out.println("No files were found in " + path);
             }
             Map<String, String> filesToUpdate = new HashMap<>();
+            int counter = 0;
+            int size = files.size();
+            int lastStep = 0;
+            System.out.println("Reading songs");
             for (File file : files) {
+                counter++;
 //                System.out.println("Reading " + file.getName());
+                double percentDone = ((double) counter) / size;
+                int percentRounded = ((int) (percentDone * 100));
+                if (percentRounded % 10 == 0 && percentRounded > lastStep) {
+                    System.out.println("Reading songs: " + percentRounded + "% done");
+                    lastStep = percentRounded;
+                }
+
                 String encoding = detectEncoding(file);
                 UltrastarFile ultrastarFile = new UltrastarFile(file, encoding);
+                if (StringUtils.isEmpty(ultrastarFile.getTitle())) {
+                    System.out.println("File: " + file.getAbsolutePath() + " seems to be wrong. This shouldn't happen");
+                    continue;
+                }
                 Song song = new Song(ultrastarFile);
+                song.setUid(HashUtil.sha1(file.getAbsolutePath()));
                 if (song.isDirty()) {
                     //updateFile(song, file, filesToUpdate);
                 }
-                boolean hasFile = Files.exists(Paths.get(song.getPath() + "\\" + song.getMp3()));
+                String mp3Path = song.getPath() + File.separator + song.getMp3();
+                boolean hasFile = Files.exists(Paths.get(mp3Path));
                 if (hasFile && StringUtils.isNotEmpty(ultrastarFile.getTitle())) {
                     if (StringUtils.isEmpty(song.getCover())) {
                         for (File cover : new File(song.getPath()).listFiles()) {
@@ -168,18 +249,26 @@ public class SongImporter {
                             }
                         }
                     }
-
                     importedSongs.add(song);
                 } else {
-                    System.out.println("Not a valid Ultrastar song: " + file.getAbsolutePath());
+                    System.out.println("Audio Missing: " + mp3Path);
                 }
-                hasFile = Files.exists(Paths.get(song.getPath() + "\\" + song.getCover()));
+                String cover = song.getCover();
+                if (StringUtils.isEmpty(cover)) {
+                    System.out.println("Cover-Tag missing: " + file.getAbsolutePath());
+                    hasFile = Files.walk(Paths.get(song.getPath()))
+                                   .filter(Files::isRegularFile)
+                                   .map(Path::toFile)
+                                   .anyMatch(filename -> filename.getName().toLowerCase().contains("[co]"));
+                } else {
+                    hasFile = Files.exists(Paths.get(song.getPath() + File.separator + cover));
+                }
                 if (!hasFile) {
-                    System.out.println("Invalid cover art: " + file.getAbsolutePath());
+                    System.out.println("Cover missing/invalid: " + file.getAbsolutePath());
                 }
-                if (song.getLanguage().equals(Language.UNDEFINED)) {
-                    System.out.println("Missing language: " + file.getAbsolutePath());
-                }
+//                if (song.getLanguage().equals(Language.UNDEFINED)) {
+//                    System.out.println("Missing language: " + file.getAbsolutePath());
+//                }
             }
             /*
             for (Map.Entry<String, String> keyValue : filesToUpdate.entrySet()) {
@@ -190,6 +279,37 @@ public class SongImporter {
             e.printStackTrace();
         }
         System.out.println("Finished importing  " + importedSongs.size() + " songs.");
+    }
+
+    private void checkMissingTxt(Path songPath) throws IOException {
+        List<File> folders = Arrays.stream(Objects.requireNonNull(songPath.toFile().listFiles()))
+                                   .filter(File::isDirectory)
+                                   .filter(it -> !it.getName().equals(".git"))
+                                   .filter(it -> !it.getName().equals(".gitignore"))
+                                   .filter(it -> !it.getName().equals(".idea"))
+                                   .filter(it -> !it.getName().equals("_temp"))
+                                   .toList();
+        int size = folders.size();
+        System.out.println("Checking for missing txt files in " + size + " folders");
+        int lastStep = 0;
+        int counter = 0;
+        for (File subfolder : folders) {
+            counter++;
+            if (subfolder.listFiles() == null) {
+                System.out.println(subfolder.getAbsolutePath() + " has no files");
+                continue;
+            }
+            double percentDone = ((double) counter) / size;
+            int percentRounded = ((int) (percentDone * 100));
+            if (percentRounded % 10 == 0 && percentRounded > lastStep) {
+                System.out.println("checkMissingTxt: " + percentRounded + "% done");
+                lastStep = percentRounded;
+            }
+            if (Arrays.stream(Objects.requireNonNull(subfolder.listFiles())).filter(File::isFile)
+                      .noneMatch(file -> file.getName().toLowerCase().endsWith(".txt"))) {
+                System.out.println(subfolder.getAbsolutePath() + " has no txt");
+            }
+        }
     }
 
     private void updateFile(Song song, File file, Map<String, String> fileNameToContent) {
@@ -292,7 +412,13 @@ public class SongImporter {
     }
 
     private void initPlaylists(String playlistsPath) {
-        System.out.println("Initializing playlists in " + playlistsPath);
+        Path playlist = Paths.get(playlistsPath);
+        if (Files.exists(playlist)) {
+            System.out.println("Initializing playlists in " + playlistsPath);
+        } else {
+            System.out.println("Could not find playlist path " + playlistsPath);
+            return;
+        }
         try {
             List<File> files = Files.walk(Paths.get(playlistsPath))
                                     .filter(Files::isRegularFile)
@@ -353,6 +479,19 @@ public class SongImporter {
                 System.out.println("Could not attach score of " + score);
             }
         }
+        usdx2cat.values().forEach(col -> col.sort(Comparator.comparingLong(Score::getScore).reversed()));
         return usdx2cat;
+    }
+
+    public Map<String, List<Score>> getScores() {
+        return scores;
+    }
+
+    public boolean isLite() {
+        return lite;
+    }
+
+    public void setLite(boolean lite) {
+        this.lite = lite;
     }
 }

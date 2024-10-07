@@ -24,12 +24,11 @@ body {
   margin: 10px 10px;
   justify-content: center;
 }
-
 .headline {
     color: #DDD;
     font-family: 'Roboto', sans-serif;
     font-size: 1.5em;
-    margin: 20px auto;
+    margin: 20px auto 1em auto;
     text-align: center;
 }
 
@@ -294,3 +293,29 @@ button {
         border-color: #0a58ca;
     }
 }
+div .padded {
+    padding-top: 0.1em
+}
+.highscores {
+    float: left;
+    width: 30%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+th.songlistHeader {
+  background-color: #0d6efd;
+  padding: 0.125em 0.25em;
+  text-align: left;
+}
+td, th {
+  padding: 0.125em 0.25em;
+  text-align: left;
+}
+tr.songlist:nth-child(odd)  {
+  background-color: #FFF;
+}
+tr.songlist:nth-child(even)  {
+  background-color: #EEE;
+}
+

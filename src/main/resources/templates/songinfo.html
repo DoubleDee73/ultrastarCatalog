@@ -1,22 +1,37 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<div class="modal">
+<div th:fragment="songinfo">
     <div th:id="'song' + ${song.uid}">
         <h3 th:text="${song.artist}">Artist</h3>
         <h4 th:text="${song.title}">Title</h4>
         <p th:text="${song.language}">Language</p>
         <p th:text="${song.year}">Year</p>
-        <div th:if="${song.hasAudio}" id="audioPlayer">
+        <div th:if="${song.hasAudio} AND !${lite}" id="audioPlayer">
             <audio controls preload="none">
                 <source th:src="@{'/audio/'} + ${song.uid} + '.mp3' + ${song.startFragment}"
                         th:type="@{'audio/' + ${song.audioType}}">
             </audio>
         </div>
-    </div>
-    <div th:id="'pl' + ${song.uid}">
-        <button id="add2PlaylistCta" th:data-songid="${song.uid}" onclick="add2Playlist(this.getAttribute('data-songid'))">
-            Add to Playlist
-        </button>
+        <table th:unless="${scores.empty}">
+            <tr>
+                <td style="width: 40%">Player</td>
+                <td style="width: 30%">Score</td>
+                <td style="width: 30%">Date</td>
+            </tr>
+            <tr th:each="score : ${scores}">
+                <td th:text="${score.player}">Player</td>
+                <td th:text="${score.score}">Score</td>
+                <td th:text="${score.date}">Date</td>
+            </tr>
+        </table>
+        <div style="visibility:hidden">
+            <div th:id="'pl' + ${song.uid}" class="padded">
+                <button id="add2PlaylistCta" th:data-songid="${song.uid}"
+                        onclick="add2Playlist(this.getAttribute('data-songid'))">
+                    Add to Playlist
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 </html>

@@ -2,6 +2,7 @@ package com.doubledee.ultrastar;
 
 import com.doubledee.ultrastar.importer.SongImporter;
 import com.doubledee.ultrastar.models.Language;
+import com.doubledee.ultrastar.models.Score;
 import com.doubledee.ultrastar.models.Song;
 import com.doubledee.ultrastar.models.UltrastarPlaylist;
 import net.davidashen.text.Hyphenator;
@@ -25,6 +26,8 @@ public class UltrastarApplication {
     public static Map<String, UltrastarPlaylist> PLAYLISTS;
     public static Map<String, String> CONFIGS = new HashMap<>();
     public static List<Language> USED_LANGUAGES = new ArrayList<>();
+    
+    public static Map<String, List<Score>> SCORES;
     public static final String PL_PATH = "playlistPath";
 
     public static void main(String[] args) {
@@ -40,12 +43,17 @@ public class UltrastarApplication {
         initUsedLanguages();
         PLAYLISTS = songImporter.getPlaylists();
         CONFIGS.put(PL_PATH, songImporter.getPlaylistPath());
+        if (songImporter.isLite()) {
+            CONFIGS.put(SongImporter.LITE, "true");
+        }
+        SCORES = songImporter.getScores();
     }
-
+    
     private static void initUsedLanguages() {
         if (SONGS == null || SONGS.isEmpty()) {
             return;
         }
+        USED_LANGUAGES.add(Language.UNDEFINED);
         for (Song song : SONGS.values()) {
             for (Language language : song.getLanguages()) {
                 language.rankUpPrio();

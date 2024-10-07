@@ -29,7 +29,7 @@ public class MsAccessDb {
             ResultSet rs = statement.executeQuery("Select * from tblSongs");
             while (rs.next()) {
                 Song song = new Song(rs);
-                songs.put(Long.parseLong(song.getUid()), song);
+                songs.put((long)song.getId(), song);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -91,14 +91,14 @@ public class MsAccessDb {
             }
             preparedStatement.setDate(i++, new Date(System.currentTimeMillis()));
             preparedStatement.setString(i++, song.getVariant());
-            preparedStatement.setLong(i++, Long.parseLong(song.getUid()));
+            preparedStatement.setLong(i++, song.getId());
 
             if (preparedStatement.executeUpdate() > 0) {
                 ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
                 if (generatedKeys.next()) {
-                    song.setUid("" + generatedKeys.getInt(1));
+                    song.setId(generatedKeys.getInt(1));
                 }
-                getSongs().put(Long.parseLong(song.getUid()), song);
+                getSongs().put((long)song.getId(), song);
             }
         } catch (SQLException e) {
             e.printStackTrace();

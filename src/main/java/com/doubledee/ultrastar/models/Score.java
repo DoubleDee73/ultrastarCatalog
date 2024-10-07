@@ -3,6 +3,8 @@ package com.doubledee.ultrastar.models;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,11 +14,8 @@ import java.util.Date;
 public class Score {
     private int ultrastarId;
     private final String artist;
-    private final byte[] artistBytes;
     private final String title;
-    private final byte[] titleBytes;
     private final String player;
-    private final byte[] playerBytes;
     private final int difficulty;
     private final int score;
     private final int timesPlayed;
@@ -25,16 +24,13 @@ public class Score {
 
     public Score(ResultSet resultSet) throws SQLException {
         this.ultrastarId = resultSet.getInt(1);
-        this.artist = dehex(resultSet.getString(2));
-        this.artistBytes = resultSet.getBytes(3);
-        this.title = dehex(resultSet.getString(4));
-        this.titleBytes = resultSet.getBytes(5);
-        this.player = dehex(resultSet.getString(6));
-        this.playerBytes = resultSet.getBytes(7);
-        this.difficulty = resultSet.getInt(8);
-        this.score = resultSet.getInt(9);
-        this.timesPlayed = resultSet.getInt(10);
-        this.date = new Date(resultSet.getInt(11) * 1000L);
+        this.artist = reader2String(resultSet.getCharacterStream(2));
+        this.title = reader2String(resultSet.getCharacterStream(3));
+        this.player = reader2String(resultSet.getCharacterStream(4));
+        this.difficulty = resultSet.getInt(5);
+        this.score = resultSet.getInt(6);
+        this.timesPlayed = resultSet.getInt(7);
+        this.date = new Date(resultSet.getInt(8) * 1000L);
     }
 
     public void setUltrastarId(int ultrastarId) {
@@ -45,24 +41,23 @@ public class Score {
         return ultrastarId;
     }
 
-    public String dehex(String text) {
+    public String reader2String(Reader text) {
+        int intValueOfChar;
+        StringBuilder targetString = new StringBuilder();
         try {
-            byte[] bytes = Hex.decodeHex(text.toCharArray());
-            return new String(trim(bytes), StandardCharsets.UTF_8);
-        } catch (DecoderException e) {
-            return null;
+            do {
+                intValueOfChar = text.read();
+                if (intValueOfChar > 0) {
+                    targetString.append((char) intValueOfChar);
+                }
+            } while (intValueOfChar >= 0);
+            text.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+        return targetString.toString();
     }
 
-    private static byte[] trim(byte[] bytes) {
-        int i = bytes.length - 1;
-        while (i >= 0 && bytes[i] == 0)
-        {
-            --i;
-        }
-
-        return Arrays.copyOf(bytes, i + 1);
-    }
     public String getArtist() {
         return artist;
     }
@@ -99,20 +94,17 @@ public class Score {
         return timesPlayed;
     }
 
-    public byte[] getArtistBytes() {
-        return artistBytes;
-    }
-
-    public byte[] getTitleBytes() {
-        return titleBytes;
-    }
-
-    public byte[] getPlayerBytes() {
-        return playerBytes;
-    }
-
     @Override
     public String toString() {
         return getArtist() + " - " + getTitle() + ": " + getScore() + " " + getDate();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Score that)) {
+            return false;
+        }
+        return getScore() == that.getScore() && getPlayer().equals(
+                that.getPlayer()) && getDate().getTime() == that.getDate().getTime();
     }
 }

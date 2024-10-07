@@ -27,12 +27,13 @@
             }
         }, true);
         function openModal(songId) {
-            var modalContent = document.getElementById('song' + songId);
-            $('#modalContent').children().first().replaceWith(modalContent);
-            var modal = document.getElementById('modalLayer');
-            modal.style.display = "block";
-            var button = document.getElementById('pl' + songId);
-            $('#buttonContent').children().first().replaceWith(button);
+            $.when(fetchSongInfo(songId)).done(function(modalContent) {
+                $('#modalContent').children().first().replaceWith(modalContent);
+                var modal = document.getElementById('modalLayer');
+                modal.style.display = "block";
+                var button = $(modalContent).find('#pl' + songId).html();
+                $('#buttonContent').children().first().replaceWith(button);
+            });
         }
         function closeModal() {
             var modal = document.getElementById('modalLayer');
@@ -57,11 +58,17 @@
                 }
             });
         }
+        function fetchSongInfo(songId) {
+            return $.ajax({
+                url: '/songinfo/' + songId
+                });
+        }
     </script>
 </head>
 <body>
     <div class="main">
     <form method="GET">
+        <input type="hidden" th:if="${view} == 'list'" name="view" value="list">
         <div class="box">
             <div class="container-1">
                 <span class="icon"><i class="fa fa-search"></i></span>
@@ -122,19 +129,27 @@
 <div class="wrapper">
     <nav class="tabs">
         <div class="selector"></div>
-        <a href="/artists" class="" th:classappend="${artistsActive} ? active : ''"><i class="fa fa-guitar"></i>Artists</a>
+        <a th:href="@{${artistLink}}" class="" th:classappend="${artistsActive} ? active : ''"><i class="fa fa-guitar"></i>Artists</a>
         <a href="/title" class="" th:classappend="${titlesActive} ? active : ''"><i class="fa fa-music"></i>Title</a>
         <a href="/"><i class="fa fa-tag"></i>Tags</a>
     </nav>
 </div>
+    
+<button style="float: right; margin-right: 20px; margin-bottom:1em;" th:attr="onclick=${listLink}">
+    <i th:unless="${view} == 'list'" class="fa fa-list"></i>
+    <i th:if="${view} == 'list'" class="fa fa-th-large"></i>
+</button>
+
 <div th:unless="${songs.empty}">
-    <div class="headline"><span th:text="${songs.size()}">n</span> songs found.</div>
+    <div class="headline">
+        <span th:text="${songs.size()}">n</span> songs found.
+    </div>
 </div>
 <div class="main">
     <div th:if="${songs.empty}">
         <span> No Songs Available </span>
     </div>
-    <div class="flip-card" th:each="song : ${songs}">
+    <div th:unless="${view} == 'list'" class="flip-card" th:each="song : ${songs}">
         <div class="flip-card-inner" th:data-songid="${song.uid}" onclick="openModal(this.getAttribute('data-songid'))">
             <div class="flip-card-front">
                 <img th:src="@{/images/} + ${song.uid} + '.jpg'" loading="lazy"/>
@@ -143,32 +158,32 @@
                     <p th:text="${song.titleAndVariant}">Title</p>
                 </div>
             </div>
-            <div class="modal">
-                <div th:id="'song' + ${song.uid}">
-                    <h3 th:text="${song.artist}">Artist</h3>
-                    <h4 th:text="${song.title}">Title</h4>
-                    <p th:text="${song.language}">Language</p>
-                    <p th:text="${song.year}">Year</p>
-                    <div th:if="${song.hasAudio}" id="audioPlayer">
-                        <audio controls preload="none">
-                            <source th:src="@{'/audio/'} + ${song.uid} + '.mp3' + ${song.startFragment}"
-                                    th:type="@{'audio/' + ${song.audioType}}">
-                        </audio>
-                    </div>
-                </div>
-                <div th:id="'pl' + ${song.uid}">
-                    <button id="add2PlaylistCta" th:data-songid="${song.uid}" onclick="add2Playlist(this.getAttribute('data-songid'))">
-                        Add to Playlist
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
+    <table th:if="${view} == 'list'" th:unless="${songs.empty}" class="songlist">
+        <thead>
+        <tr>
+            <th th:if="${artistsActive}" class="songlistHeader">Artist</th>
+            <th class="songlistHeader">Title</th>
+            <th th:unless="${artistsActive}" class="songlistHeader">Artist</th>
+            <th class="songlistHeader">Language</th>
+            <th class="songlistHeader">Year</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:if="${view} == 'list'" th:each="song : ${songs}" class="songlist">
+            <td th:if="${artistsActive}" th:text=" ${song.artist}">Artist</td>
+            <td th:text=" ${song.titleAndVariant}">Title</td>
+            <td th:unless="${artistsActive}" th:text=" ${song.artist}">Artist</td>
+            <td th:text=" ${song.language}">Language</td>
+            <td th:text=" ${song.year}">Year</td>
+        </tr>
+    </table>
     <div id="modalLayer" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal();">&times;</span>
             <div id="modalContent"><span>Song-Info</span></div>
-            <div>
+            <div class="padded" th:unless="${playlists.empty}">
                 <p>Manage Playlist</p>
                 <select name="add2playlist" id="add2playlist" class="select-language" placeholder="Playlists">
                     <option value="">Select Playlist</option>
@@ -176,7 +191,7 @@
                             th:selected="${entry.key} == ${selectedPlaylist}"></option>
                 </select>
             </div>
-            <div id="buttonContent"><button></button></div>
+            <div id="buttonContent" class="padded" th:unless="${playlists.empty}"><button></button></div>
         </div>
     </div>
 </div>

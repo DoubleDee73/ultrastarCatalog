@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 public class Song {
     private String uid;
+    private int id;
     private final String title;
     private final String artist;
     private final String mp3;
@@ -52,7 +53,6 @@ public class Song {
     private String medleystartbeat;
     private String medleyendbeat;
     private String relative;
-    private String id;
     private String audio;
     private String instrumental;
     private String vocals;
@@ -61,8 +61,8 @@ public class Song {
     private boolean dirty;
     private final static Pattern BRACKET_PATTERN = Pattern.compile("\\[.*?\\]");
 
-    public Song(int uid, String title, String artist, String mp3, String path, String textFile) {
-        this.uid = Integer.toString(uid);
+    public Song(int id, String title, String artist, String mp3, String path, String textFile) {
+        this.id = id;
         this.title = title;
         this.artist = artist;
         this.mp3 = mp3;
@@ -88,7 +88,7 @@ public class Song {
     }
 
     public Song(UltrastarFile ultrastarFile) {
-        this.uid = HashUtil.sha1(ultrastarFile.getFilename());
+        this.id = 0;
         this.songType = SongType.getSongTypeByTitle(ultrastarFile.getTitle());
         this.comment = ultrastarFile.getComment();
         if (this.songType != SongType.ORIGINAL_KARAOKE) {
@@ -104,12 +104,12 @@ public class Song {
         } else {
             tempTitle = ultrastarFile.getTitle();
         }
-        Matcher bracketResult = BRACKET_PATTERN.matcher(tempTitle);
-        while (bracketResult.find()) {
-            String variant = bracketResult.group();
-            tempTitle = tempTitle.replace(variant, StringUtils.EMPTY).trim();
-            this.variant = variant;
-        }
+//        Matcher bracketResult = BRACKET_PATTERN.matcher(tempTitle);
+//        while (bracketResult.find()) {
+//            String variant = bracketResult.group();
+//            tempTitle = tempTitle.replace(variant, StringUtils.EMPTY).trim();
+//            this.variant = variant;
+//        }
         this.title = tempTitle;
         this.artist = ultrastarFile.getArtist();
         this.mp3 = ultrastarFile.getMp3();
@@ -142,7 +142,6 @@ public class Song {
         this.medleystartbeat = ultrastarFile.getMedleystartbeat();
         this.medleyendbeat = ultrastarFile.getMedleyendbeat();
         this.relative = ultrastarFile.getRelative();
-        this.id = ultrastarFile.getId();
         this.tags = ultrastarFile.getTags();
         this.audio = ultrastarFile.getAudio();
         this.instrumental = ultrastarFile.getInstrumental();
@@ -341,7 +340,10 @@ public class Song {
     }
 
     public String getGap() {
-        return gap;
+        if (gap == null) {
+            return "0";
+        }
+        return gap.replace(",", ".");
     }
 
     public void setGap(String gap) {
@@ -492,11 +494,11 @@ public class Song {
         this.relative = relative;
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 
