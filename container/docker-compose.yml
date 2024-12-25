@@ -9,6 +9,9 @@ services:
           - ./playlists:/app/playlists/
           - ./UltraStar.db:/app/ultraStar.db:ro
           #- ./ultrastar_legacy.db:/app/ultrastar_legacy.db:ro
+
+          # For direct config access (You loose the access rights)
+          #- ./config.properties:/app/config.properties
         environment:
           - LITE=false
         image: doubledee73/ultrastarcatalog:latest
