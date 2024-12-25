@@ -3,7 +3,7 @@ name: docker
 on:
   push:
     branches:
-      - 'docker'
+      - 'master'
 
 jobs:
   docker:
@@ -25,4 +25,4 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: DoubleDee73/ultrastarcatalog:latest
+          tags: doubledee73/ultrastarcatalog:latest
