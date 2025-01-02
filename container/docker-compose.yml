@@ -1,0 +1,19 @@
+---
+version: "3.9"
+services:
+    ultrastarcatalog:
+        container_name: UltrastarCatalog 
+        volumes:
+          # For config in compose file with access rights
+          - ./songs:/app/songs/:ro
+          - ./playlists:/app/playlists/
+          - ./UltraStar.db:/app/ultraStar.db:ro
+          #- ./ultrastar_legacy.db:/app/ultrastar_legacy.db:ro
+
+          # For direct config access (You loose the access rights)
+          #- ./config.properties:/app/config.properties
+        environment:
+          - LITE=false
+        image: doubledee73/ultrastarcatalog:latest
+        ports:
+          - 8080:8080

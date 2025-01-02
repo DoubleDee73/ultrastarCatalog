@@ -21,6 +21,9 @@ The software will scan through your songs folder and read the ultrastar-txt file
 - the java.exe from your bin folder should be in your environment variables
 
 # How to start it
+
+## Use native with java
+
 - Copy both files somewhere
 - Edit the config.properties file and have SongDir point to your Ultrastar songs directory and PlaylistDir to your playlist directory
   - Please note, that if you are on Windows you should use / (slash) or \\\\ (double-backslash) as folder-separators
@@ -33,6 +36,10 @@ The software will scan through your songs folder and read the ultrastar-txt file
 
 If you want your party to be able to access this, obviously they have to be in the same wifi as the server.
 Alternatively, you could also create a dynamic DNS host name, and configure port-forwarding of port 8080 in your router to point to the computer where the web app is running.
+
+## Use with Docker
+
+You can use docker to start the application. See the [docker-compose.yml](container/docker-compose.yml) file for an example configuration.
 
 # Are there more options?
 - If you want to display your scores, you can edit the config.properties and have the parameter UltrastarDb point to your
