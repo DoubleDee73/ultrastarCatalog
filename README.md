@@ -22,13 +22,13 @@ The software will scan through your songs folder and read the ultrastar-txt file
 
 # How to start it
 
-## Use native with java
+## Use native with 'java'
 
 - Copy both files somewhere
 - Edit the config.properties file and have SongDir point to your Ultrastar songs directory and PlaylistDir to your playlist directory
   - Please note, that if you are on Windows you should use / (slash) or \\\\ (double-backslash) as folder-separators
 - open your terminal/console and switch to the directory you have copied the files to and start the jar with:
-- java -jar ultrastarCatalog-0.2.jar
+- java -jar ultrastarCatalog-0.3.jar
   - The call above will use the port 8080 by default. You can optionally append --server.port=8081 to change the port to 8081 (obviously you can use any port you like), if 8080 is already in use on your machine.
 - if everything is fine, you can open your browser with http://localhost:8080/ to check if it works
 - Find out the IP address of the machine on which the web server has been started, as "localhost" is only accessible from that particular computer
