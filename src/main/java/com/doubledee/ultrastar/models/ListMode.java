@@ -2,7 +2,8 @@ package com.doubledee.ultrastar.models;
 
 public enum ListMode {
     ARTIST("Artist"),
-    TITLE("Song Title");
+    TITLE("Song Title"),
+    FAVORITES("Favorites");
 
     final String headline;
 

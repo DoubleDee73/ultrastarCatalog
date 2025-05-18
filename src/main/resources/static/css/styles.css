@@ -319,3 +319,15 @@ tr.songlist:nth-child(even)  {
   background-color: #EEE;
 }
 
+.favorite-icon {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    color: gold;
+    font-size: 40px;
+    z-index: 10;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;                 
+    padding: 4px;                        
+}

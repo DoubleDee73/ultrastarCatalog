@@ -161,15 +161,15 @@ public class SongImporter {
         }
         Path songPath = Paths.get(path);
         File pathAsFile = songPath.toFile();
-        boolean hasTxt = Arrays.stream(pathAsFile.listFiles())
-                               .map(subFile -> subFile.getName())
-                               .anyMatch(filename -> filename.endsWith(".txt"));
+        boolean hasTxt = Arrays.stream(Objects.requireNonNull(pathAsFile.listFiles()))
+                               .map(File::getName)
+                               .anyMatch(filename -> filename.endsWith(".txt") && !filename.startsWith("._"));
         int size = -1;
         if (pathAsFile.isDirectory()) {
             if (!hasTxt) {
-                if (Arrays.stream(pathAsFile.listFiles()).anyMatch(File::isDirectory)) {
+                if (Arrays.stream(Objects.requireNonNull(pathAsFile.listFiles())).anyMatch(File::isDirectory)) {
                     System.out.println("Initializing songs in " + path);
-                    size = pathAsFile.listFiles().length;
+                    size = Objects.requireNonNull(pathAsFile.listFiles()).length;
                 } else {
                     System.out.println("TXT file is missing in " + path);
                 }
@@ -179,7 +179,7 @@ public class SongImporter {
         int lastStep = 0;
         int counter = 0;
         List<File> files = new ArrayList<>();
-        for (File folder : pathAsFile.listFiles()) {
+        for (File folder : Objects.requireNonNull(pathAsFile.listFiles())) {
             counter++;
 
             if (isIgnored(folder.getName())) {
@@ -194,7 +194,8 @@ public class SongImporter {
                 }
                 files.addAll(retrieveFilesFromPath(folder.getAbsolutePath()));
             } else {
-                if (folder.getName().toLowerCase().endsWith(".txt")) {
+                String txtName = folder.getName().toLowerCase();
+                if (txtName.endsWith(".txt") && !txtName.startsWith("._")) {
                     files.add(folder);
                 }
             }

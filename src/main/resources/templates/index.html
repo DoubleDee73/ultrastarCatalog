@@ -63,20 +63,61 @@
                 url: '/songinfo/' + songId
                 });
         }
+        function toggleFavorite(event, icon) {
+            event.stopPropagation(); 
+        
+            const card = icon.closest(".flip-card-inner");
+            const songId = card.getAttribute("data-songid");
+        
+            let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+        
+            const index = favorites.indexOf(songId);
+        
+            if (index === -1) {
+              favorites.push(songId);
+              icon.classList.remove("fa-regular");
+              icon.classList.add("fa-solid");
+            } else {
+              favorites.splice(index, 1);
+              icon.classList.remove("fa-solid");
+              icon.classList.add("fa-regular");
+            }
+        
+            localStorage.setItem("favorites", JSON.stringify(favorites));
+          }
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+            document.querySelectorAll(".flip-card-inner").forEach(card => {
+                const songId = card.getAttribute("data-songid");
+                const icon = card.querySelector(".favorite-icon");
+                
+                if (favorites.includes(songId)) {
+                    icon.classList.remove("fa-regular");
+                    icon.classList.add("fa-solid");
+                }
+            });
+        });
+        function submitFavorites(view) {
+            const favorites = localStorage.getItem("favorites") || "[]";
+            document.getElementById("favorites-input").value = favorites;
+            document.getElementById("favorites-view").value = view;
+            document.getElementById("favorites-form").submit();
+        }
     </script>
 </head>
 <body>
     <div class="main">
     <form method="GET">
         <input type="hidden" th:if="${view} == 'list'" name="view" value="list">
-        <div class="box">
+        <div class="box" th:unless="${favoritesActive}">
             <div class="container-1">
                 <span class="icon"><i class="fa fa-search"></i></span>
                 <input type="search" id="search" name="searchterm" th:placeholder="${search}" th:value="${searchterm}"/>
             </div>
         </div>
 
-        <div class="searchform">
+        <div class="searchform" th:unless="${favoritesActive}">
             <div class="select-wrapper">
                 <label for="language">Language</label>
                 <select name="language" id="language" class="select-language" placeholder="Language">
@@ -104,7 +145,7 @@
                 <input name="tags" placeholder="write some tags" th:value="${filteredTags}">
             </div>
         </div>
-        <div class="box" style="text-align: center">
+        <div class="box" style="text-align: center" th:unless="${favoritesActive}">
             <button onclick="this.form.submit()" class="search">Search</button>
         </div>
         <script th:inline="javascript">
@@ -132,9 +173,13 @@
         <a th:href="@{${artistLink}}" class="" th:classappend="${artistsActive} ? active : ''"><i class="fa fa-guitar"></i>Artists</a>
         <a href="/title" class="" th:classappend="${titlesActive} ? active : ''"><i class="fa fa-music"></i>Title</a>
         <a href="/"><i class="fa fa-tag"></i>Tags</a>
+        <a href="#"  th:classappend="${favoritesActive} ? active : ''" onclick="submitFavorites('')" id="favorites-link"><i class="fa fa-star"></i>Favorites</a>
     </nav>
 </div>
-    
+<form id="favorites-form" action="/favorites" method="post" style="display: none;">
+    <input type="hidden" name="favoritesJson" id="favorites-input">
+    <input type="hidden" name="view" id="favorites-view">
+</form>    
 <button style="float: right; margin-right: 20px; margin-bottom:1em;" th:attr="onclick=${listLink}">
     <i th:unless="${view} == 'list'" class="fa fa-list"></i>
     <i th:if="${view} == 'list'" class="fa fa-th-large"></i>
@@ -151,6 +196,7 @@
     </div>
     <div th:unless="${view} == 'list'" class="flip-card" th:each="song : ${songs}">
         <div class="flip-card-inner" th:data-songid="${song.uid}" onclick="openModal(this.getAttribute('data-songid'))">
+            <i class="fa-regular fa-star favorite-icon" onclick="toggleFavorite(event, this)"></i>
             <div class="flip-card-front">
                 <img th:src="@{/images/} + ${song.uid} + '.jpg'" loading="lazy"/>
                 <div class="text">

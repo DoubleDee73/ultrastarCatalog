@@ -4,6 +4,9 @@ import com.doubledee.ultrastar.db.MsAccessDb;
 import com.doubledee.ultrastar.importer.SongImporter;
 import com.doubledee.ultrastar.models.*;
 import com.doubledee.ultrastar.utils.Normalizer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.collections4.CollectionUtils;
@@ -107,7 +110,22 @@ public class UltrastarController {
         songs = filterSongs(searchterm, songs, language, decade, filteredTags, false);
         return buildSonglistModel(model, songs, ListMode.TITLE, searchterm, language, decade, playlist, tagsList, view);
     }
+    
+    @PostMapping("/favorites")
+    public String handleFavorites(@RequestParam("favoritesJson") String favoritesJson,
+                                  @RequestParam(name = "view", required = false, defaultValue = "") String view,
+                                  Model model) {
+        List<Song> songs = retrieveSonglist(ListMode.FAVORITES, favoritesJson);
+        model.addAttribute("songs", songs);
+        model.addAttribute("playlists", UltrastarApplication.PLAYLISTS);
+        model.addAttribute("artistLink", "/artists");
+        model.addAttribute("titleLink", "/title");
+        model.addAttribute("view", view);
+        model.addAttribute("favoritesActive", true);
+        model.addAttribute("listLink", "submitFavorites('" + (view.isEmpty() ? "list" : "") + "');");
 
+        return "index";
+    }
     private List<Song> filterSongs(String searchterm, List<Song> songs, String language, String decade,
                                    Set<TagsEnum> filteredTags, boolean sortByArtist) {
         if (StringUtils.isEmpty(searchterm)) {
@@ -215,19 +233,28 @@ public class UltrastarController {
         return song -> song.getTitleNormalized().contains(normalizedSearch);
     }
 
-    private List<Song> retrieveSonglist(ListMode listMode, String playlist) {
+    private List<Song> retrieveSonglist(ListMode listMode, String playlistOrFavorites) {
         if (MapUtils.isEmpty(UltrastarApplication.SONGS)) {
             System.out.println("Something odd happened. No Songs!");
             return Collections.emptyList();
         }
-        UltrastarPlaylist ultrastarPlaylist;
-        if (StringUtils.isNotEmpty(playlist)) {
-            ultrastarPlaylist = UltrastarApplication.PLAYLISTS.get(playlist);
+        List<Song> songs;
+        if (StringUtils.isNotEmpty(playlistOrFavorites)) {
+            if (!ListMode.FAVORITES.equals(listMode)) {
+                songs = getSongs(UltrastarApplication.PLAYLISTS.get(playlistOrFavorites));
+            } else {
+                List<String> favorites;
+                try {
+                    favorites = new ObjectMapper().readValue(playlistOrFavorites, new TypeReference<>() {});
+                } catch (JsonProcessingException e) {
+                    favorites = new ArrayList<>();
+                }
+                songs = getSongs(favorites);
+            }
         } else {
-            ultrastarPlaylist = null;
+            songs = new ArrayList<>(UltrastarApplication.SONGS.values());
         }
-        List<Song> songs = getSongs(ultrastarPlaylist);
-        if (CollectionUtils.isEmpty(songs)) {
+        if (CollectionUtils.isEmpty(songs) && listMode != ListMode.FAVORITES) {
             System.out.println("No songs were initilized yet. Retrying...");
             songs = new SongImporter().getImportedSongs();
         }
@@ -235,7 +262,7 @@ public class UltrastarController {
             System.out.println("Something odd happened. No Songs!");
             songs = Collections.emptyList();
         }
-        if (ultrastarPlaylist == null) {
+        if (StringUtils.isEmpty(playlistOrFavorites) || listMode == ListMode.FAVORITES) {
             Comparator<Song> comparator;
             if (listMode == ListMode.ARTIST) {
                 comparator = Comparator.comparing(Song::getArtistNormalized)
@@ -266,6 +293,15 @@ public class UltrastarController {
             }
         }
         return songs;
+    }
+
+    private List<Song> getSongs(List<String> songIds) {
+        if (CollectionUtils.isEmpty(songIds)) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(UltrastarApplication.SONGS.values().stream()
+                .filter(song -> songIds.contains(song.getUid()))
+                .toList());
     }
 
     private List<Song> applyFilter(Predicate<Song> searchtermFilter,
@@ -484,9 +520,9 @@ public class UltrastarController {
         buildSonglistModel(model, retrieveSonglist(ListMode.ARTIST, ""), ListMode.ARTIST, "", "", "", "", "", "");
         return "index";
     }
-
+    
     private Map<TagsEnum, Integer> getTagsList() {
-        List<Song> songs = getSongs(null);
+        List<Song> songs = getSongs((UltrastarPlaylist) null);
         Map<TagsEnum, Integer> usedTagsMap = new HashMap<>();
         for (Song song : songs) {
             for (TagsEnum usedTags : TagsEnum.getTagsByString(song.getTags(), true)) {

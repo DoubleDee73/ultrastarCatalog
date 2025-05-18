@@ -135,6 +135,6 @@
     </build>
     <properties>
         <start-class>com.doubledee.ultrastar.UltrastarApplication</start-class>
-        <project.version>0.3</project.version>
+        <project.version>0.4</project.version>
     </properties>
 </project>
