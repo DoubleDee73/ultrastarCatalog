@@ -126,7 +126,7 @@
                             <mainClass>test.App</mainClass>
                             <addDefaultImplementationEntries>
                                 true
-                            </addDefaultImplementationEntries>
+                            </addDefaultImplementationEntries>  
                         </manifest>
                     </archive>
                 </configuration>

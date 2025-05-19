@@ -5,15 +5,21 @@ import com.doubledee.ultrastar.models.Language;
 import com.doubledee.ultrastar.models.Score;
 import com.doubledee.ultrastar.models.Song;
 import com.doubledee.ultrastar.models.UltrastarPlaylist;
+import com.doubledee.ultrastar.utils.VersionUtils;
 import net.davidashen.text.Hyphenator;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
@@ -31,9 +37,21 @@ public class UltrastarApplication {
     public static final String PL_PATH = "playlistPath";
 
     public static void main(String[] args) {
-        SpringApplication.run(UltrastarApplication.class, args);
+        ConfigurableApplicationContext ctx = SpringApplication.run(UltrastarApplication.class, args);
+        String version = VersionUtils.getVersionFromManifest();
         SongImporter songImporter = new SongImporter();
         init(songImporter);
+        Environment env = ctx.getEnvironment();
+        String port = env.getProperty("local.server.port");
+        InetAddress localHost = null;
+        String ip = "localhost";
+        try {
+            localHost = InetAddress.getLocalHost();
+            ip = localHost.getHostAddress();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("UltrastarCatalog v" + version + " started on: http://" + ip + ":" + port);
     }
 
     public static void init(SongImporter songImporter) {
