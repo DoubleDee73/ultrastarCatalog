@@ -1,22 +1,45 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+<!-- Content of the "info" popup of a song (loaded by /songinfo/{songId}) - compact, without labels -->
 <div th:fragment="songinfo">
-    <div th:id="'song' + ${song.uid}">
-        <h3 th:text="${song.artist}">Artist</h3>
-        <h4 th:text="${song.title}">Title</h4>
-        <p th:text="${@labels.languages(song)}">Language</p>
-        <p th:text="${song.year}">Year</p>
-        <div th:if="${song.hasAudio} AND !${lite}" id="audioPlayer">
-            <audio controls preload="none">
-                <source th:src="@{'/audio/'} + ${song.uid} + '.mp3' + ${song.startFragment}"
-                        th:type="@{'audio/' + ${song.audioType}}">
-            </audio>
+    <div class="song-info" th:id="'song' + ${song.uid}">
+        <div class="song-info-head">
+            <!-- Cover on the left (hidden if the song has no cover) -->
+            <img class="song-info-cover" th:src="@{/images/} + ${song.uid} + '.jpg'" alt=""
+                 onerror="this.style.display='none'"/>
+            <div class="song-info-text">
+                <!-- ARTIST : TITLE -->
+                <div class="song-info-main">
+                    <span class="song-info-artist" th:text="${song.artist}">Artist</span> :
+                    <span th:text="${song.titleAndVariant}">Title</span>
+                </div>
+                <!-- YEAR : LANGUAGE (only what is known) -->
+                <div class="song-info-line" th:with="lang=${@labels.languages(song)}"
+                     th:unless="${#strings.isEmpty(song.year) and #strings.isEmpty(lang)}">
+                    <span th:text="${song.year}">1975</span><span
+                        th:if="${not #strings.isEmpty(song.year) and not #strings.isEmpty(lang)}"> : </span><span
+                        th:text="${lang}">English</span>
+                </div>
+                <!-- EDITION (blue) GENRE -->
+                <div class="song-info-line" th:unless="${#strings.isEmpty(song.edition) and #strings.isEmpty(song.genre)}">
+                    <span class="song-info-edition" th:text="${song.edition}">Edition</span><span
+                        th:if="${not #strings.isEmpty(song.edition) and not #strings.isEmpty(song.genre)}"> · </span><span
+                        class="song-info-genre" th:text="${song.genre}">Genre</span>
+                </div>
+                <!-- Playlists that contain the song -->
+                <div class="song-info-line song-info-playlists" th:unless="${songPlaylists.empty}"
+                     th:title="#{info.playlists}">
+                    <i class="fa-solid fa-list-ul"></i>
+                    <span th:text="${#strings.listJoin(songPlaylists, ', ')}">Playlists</span>
+                </div>
+            </div>
         </div>
-        <table th:unless="${scores.empty}">
+        <!-- Scores, only when UltrastarDb is configured and the song has been sung -->
+        <table class="song-info-scores" th:unless="${scores.empty}">
             <tr>
-                <td style="width: 40%" th:text="#{song.player}">Player</td>
-                <td style="width: 30%" th:text="#{song.score}">Score</td>
-                <td style="width: 30%" th:text="#{song.date}">Date</td>
+                <th th:text="#{song.player}">Player</th>
+                <th th:text="#{song.score}">Score</th>
+                <th th:text="#{song.date}">Date</th>
             </tr>
             <tr th:each="score : ${scores}">
                 <td th:text="${score.player}">Player</td>
@@ -24,15 +47,6 @@
                 <td th:text="${score.date}">Date</td>
             </tr>
         </table>
-        <div style="visibility:hidden">
-            <div th:id="'pl' + ${song.uid}" class="padded">
-                <button id="add2PlaylistCta" th:data-songid="${song.uid}"
-                        onclick="add2Playlist(this.getAttribute('data-songid'))"
-                        th:text="#{song.addToPlaylist}">
-                    Add to Playlist
-                </button>
-            </div>
-        </div>
     </div>
 </div>
 </html>

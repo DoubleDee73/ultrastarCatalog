@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  Selection screen of a filter: a grid of tiles (picture + name + number of songs), several can be selected.
+  fid      : name of the URL parameter (language, decade, tags, playlist)
+  title    : translated title
+  icon     : Font Awesome classes
+  options  : List<FilterOption> (see FilterOptions.java)
+  selected : values currently selected
+-->
+<div th:fragment="filterModal(fid, title, icon, options, selected)" class="filter-modal"
+     th:id="'filter-' + ${fid}" th:attr="data-param=${fid}" hidden>
+    <div class="filter-dialog" role="dialog" aria-modal="true">
+        <div class="filter-header">
+            <h2><i th:class="${icon}"></i> <span th:text="${title}">Title</span></h2>
+            <button type="button" class="modal-close" onclick="closeFilter()"
+                    th:title="#{info.close}" th:attr="aria-label=#{info.close}">&times;</button>
+        </div>
+        <div class="filter-grid">
+            <p class="filter-empty" th:if="${options.empty}" th:text="#{filter.empty}">Nothing to choose</p>
+            <button type="button" class="filter-tile" th:each="o : ${options}"
+                    th:attr="data-value=${o.value}"
+                    th:classappend="${#lists.contains(selected, o.value)} ? 'selected'"
+                    onclick="toggleTile(this)">
+                <span class="tile-visual" th:switch="${o.kind}">
+                    <th:block th:case="'flag'">
+                        <span th:if="${o.visual != null}" th:class="'fi fis fi-' + ${o.visual}"></span>
+                        <span th:if="${o.visual == null}" class="tile-code"
+                              th:text="${#strings.toUpperCase(o.value)}">XX</span>
+                    </th:block>
+                    <span th:case="'decade'" th:class="'tile-decade ' + ${o.visual}" th:text="${o.label}">80s</span>
+                    <img th:case="'tag'" th:src="${o.visual}" alt="" loading="lazy"
+                         onerror="this.style.visibility='hidden'"/>
+                    <span th:case="'playlist'" class="tile-mosaic"
+                          th:classappend="'covers-' + ${#lists.size(o.covers)}">
+                        <img th:each="uid : ${o.covers}" th:src="@{/images/} + ${uid} + '.jpg'" alt=""
+                             loading="lazy" onerror="this.style.visibility='hidden'"/>
+                        <i th:if="${o.covers.empty}" class="fa-solid fa-list-ul"></i>
+                    </span>
+                </span>
+                <span class="tile-label" th:text="${o.label}">Label</span>
+                <span class="tile-count" th:text="${o.count}">12</span>
+                <span class="tile-check"><i class="fa-solid fa-check"></i></span>
+            </button>
+        </div>
+        <div class="filter-footer">
+            <button type="button" class="filter-clear" onclick="clearFilterSelection()"
+                    th:text="#{filter.clear}">Clear</button>
+            <button type="button" class="filter-apply" onclick="applyFilter()"
+                    th:text="#{filter.apply}">Apply</button>
+        </div>
+    </div>
+</div>
+</html>
