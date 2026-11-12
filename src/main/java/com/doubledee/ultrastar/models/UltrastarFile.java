@@ -67,7 +67,7 @@ public class UltrastarFile {
             String line;
             while ((line = br.readLine()) != null) {
                 line = line.replace(UTF8_BOM, StringUtils.EMPTY);
-                UltrastarTag ultrastarTag = UltrastarTag.getTagForLine(line);
+                UltrastarTag ultrastarTag = UltrastarTag.getTagForLine(line, file.getAbsolutePath());
                 if (ultrastarTag != null) {
                     Method setter = this.getClass().getMethod(ultrastarTag.getSetterName(), String.class);
                     if (setter != null) {
