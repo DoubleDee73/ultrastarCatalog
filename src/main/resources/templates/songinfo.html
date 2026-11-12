@@ -4,7 +4,7 @@
     <div th:id="'song' + ${song.uid}">
         <h3 th:text="${song.artist}">Artist</h3>
         <h4 th:text="${song.title}">Title</h4>
-        <p th:text="${song.language}">Language</p>
+        <p th:text="${@labels.languages(song)}">Language</p>
         <p th:text="${song.year}">Year</p>
         <div th:if="${song.hasAudio} AND !${lite}" id="audioPlayer">
             <audio controls preload="none">
@@ -14,9 +14,9 @@
         </div>
         <table th:unless="${scores.empty}">
             <tr>
-                <td style="width: 40%">Player</td>
-                <td style="width: 30%">Score</td>
-                <td style="width: 30%">Date</td>
+                <td style="width: 40%" th:text="#{song.player}">Player</td>
+                <td style="width: 30%" th:text="#{song.score}">Score</td>
+                <td style="width: 30%" th:text="#{song.date}">Date</td>
             </tr>
             <tr th:each="score : ${scores}">
                 <td th:text="${score.player}">Player</td>
@@ -27,7 +27,8 @@
         <div style="visibility:hidden">
             <div th:id="'pl' + ${song.uid}" class="padded">
                 <button id="add2PlaylistCta" th:data-songid="${song.uid}"
-                        onclick="add2Playlist(this.getAttribute('data-songid'))">
+                        onclick="add2Playlist(this.getAttribute('data-songid'))"
+                        th:text="#{song.addToPlaylist}">
                     Add to Playlist
                 </button>
             </div>
