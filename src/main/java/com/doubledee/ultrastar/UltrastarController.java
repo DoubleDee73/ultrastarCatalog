@@ -254,7 +254,9 @@ public class UltrastarController {
         } else {
             songs = new ArrayList<>(UltrastarApplication.SONGS.values());
         }
-        if (CollectionUtils.isEmpty(songs) && listMode != ListMode.FAVORITES) {
+        // Library not loaded yet: re-import. Not when a playlist was selected (it may simply be empty).
+        if (CollectionUtils.isEmpty(songs) && listMode != ListMode.FAVORITES
+                && StringUtils.isEmpty(playlistOrFavorites)) {
             System.out.println("No songs were initilized yet. Retrying...");
             songs = new SongImporter().getImportedSongs();
         }
@@ -277,8 +279,11 @@ public class UltrastarController {
     }
 
     private List<Song> getSongs(UltrastarPlaylist ultrastarPlaylist) {
-        if (ultrastarPlaylist == null || CollectionUtils.isEmpty(ultrastarPlaylist.getSongs())) {
+        if (ultrastarPlaylist == null) {
             return new ArrayList<>(UltrastarApplication.SONGS.values());
+        }
+        if (CollectionUtils.isEmpty(ultrastarPlaylist.getSongs())) {
+            return new ArrayList<>(); // empty playlist selected: no songs (not the whole library)
         }
         List<Song> songs = new ArrayList<>();
         for (String artistAndTitle : ultrastarPlaylist.getSongs()) {
