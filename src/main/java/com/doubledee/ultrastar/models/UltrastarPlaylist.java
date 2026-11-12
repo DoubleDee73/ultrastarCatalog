@@ -20,16 +20,23 @@ public class UltrastarPlaylist {
             BufferedReader br = new BufferedReader(inputStreamReader);
             String line;
             while ((line = br.readLine()) != null) {
+                line = line.replace("﻿", ""); // UTF-8 BOM
                 if (line.toLowerCase().startsWith("#name:")) {
-                    this.name = line.substring(7);
+                    this.name = line.substring(6).trim();
                 }
-                if (!line.startsWith("#")) {
+                // blank lines are not songs (an empty playlist must stay empty)
+                if (!line.startsWith("#") && !line.isBlank()) {
                     songs.add(line);
                 }
             }
+            br.close();
         } catch (IOException e) {
             System.out.println(file.getName());
             e.printStackTrace();
+        }
+        if (name == null || name.isBlank()) {
+            // no "#Name:" line: use the file name without ".upl"
+            this.name = file.getName().replaceFirst("(?i)\\.upl$", "");
         }
     }
 

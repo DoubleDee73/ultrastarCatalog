@@ -18,7 +18,11 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.support.SimpleTriggerContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -260,7 +264,9 @@ public class UltrastarController {
         } else {
             songs = new ArrayList<>(UltrastarApplication.SONGS.values());
         }
-        if (CollectionUtils.isEmpty(songs) && listMode != ListMode.FAVORITES) {
+        // Library not loaded yet: re-import. Not when a playlist was selected (it may simply be empty).
+        if (CollectionUtils.isEmpty(songs) && listMode != ListMode.FAVORITES
+                && StringUtils.isEmpty(playlistOrFavorites)) {
             System.out.println("No songs were initilized yet. Retrying...");
             songs = new SongImporter().getImportedSongs();
         }
@@ -283,8 +289,11 @@ public class UltrastarController {
     }
 
     private List<Song> getSongs(UltrastarPlaylist ultrastarPlaylist) {
-        if (ultrastarPlaylist == null || CollectionUtils.isEmpty(ultrastarPlaylist.getSongs())) {
+        if (ultrastarPlaylist == null) {
             return new ArrayList<>(UltrastarApplication.SONGS.values());
+        }
+        if (CollectionUtils.isEmpty(ultrastarPlaylist.getSongs())) {
+            return new ArrayList<>(); // empty playlist selected: no songs (not the whole library)
         }
         List<Song> songs = new ArrayList<>();
         for (String artistAndTitle : ultrastarPlaylist.getSongs()) {
@@ -415,17 +424,25 @@ public class UltrastarController {
         }
     }
 
-    @RequestMapping(value = "/audio/{file}", method = RequestMethod.GET)
-    public void getAudioAsByteArray(HttpServletResponse response,
-                                    @PathVariable("file") String file) throws IOException {
+    /**
+     * Streams the audio file of a song. Returning a Resource lets Spring answer "Range" requests
+     * (206 Partial Content): the browser can then start playback in the middle of the song
+     * (#t= fragment, preview) and seek. The file is also properly closed after sending.
+     */
+    @GetMapping("/audio/{file}")
+    public ResponseEntity<Resource> getAudio(@PathVariable("file") String file) {
         String uid = file.replace(".mp3", "");
         Song song = UltrastarApplication.SONGS.get(uid);
-        if (song != null) {
-            InputStream in = new BufferedInputStream(
-                    new FileInputStream(song.getPath() + File.separator + song.getMp3()));
-            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
-            IOUtils.copy(in, response.getOutputStream());
+        if (song == null || !song.hasAudio()) {
+            return ResponseEntity.notFound().build();
         }
+        File audioFile = new File(song.getPath() + File.separator + song.getMp3());
+        if (!audioFile.isFile()) {
+            return ResponseEntity.notFound().build();
+        }
+        MediaType mediaType = MediaTypeFactory.getMediaType(audioFile.getName())
+                                              .orElse(MediaType.APPLICATION_OCTET_STREAM);
+        return ResponseEntity.ok().contentType(mediaType).body(new FileSystemResource(audioFile));
     }
 
     @GetMapping("/songinfo/{songId}")
