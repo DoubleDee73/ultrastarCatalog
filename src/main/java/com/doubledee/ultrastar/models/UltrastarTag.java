@@ -46,6 +46,13 @@ public enum UltrastarTag {
     PROVIDEDBY;
 
     public static UltrastarTag getTagForLine(String line) {
+        return getTagForLine(line, null);
+    }
+
+    /**
+     * @param sourceFile the txt file the line comes from, shown in the log when the tag is unknown (may be null)
+     */
+    public static UltrastarTag getTagForLine(String line, String sourceFile) {
         if (!line.startsWith("#")) {
             return null;
         }
@@ -54,7 +61,7 @@ public enum UltrastarTag {
                 return tag;
             }
         }
-        System.out.println("Tag for " + line + " was not found");
+        System.out.println("Tag for " + line + " was not found" + (sourceFile != null ? " in " + sourceFile : ""));
         return null;
     }
 

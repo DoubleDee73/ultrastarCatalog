@@ -542,6 +542,22 @@ public class Song {
         this.providedby = providedby;
     }
 
+    /**
+     * Position (in seconds) where the audio preview starts: #PREVIEWSTART of the txt file,
+     * or 0 (beginning of the song) when it is missing or invalid. Accepts "45.5" and "45,5".
+     */
+    public double getPreviewStartSeconds() {
+        if (StringUtils.isBlank(previewstart)) {
+            return 0;
+        }
+        try {
+            double seconds = Double.parseDouble(previewstart.trim().replace(',', '.'));
+            return seconds > 0 ? seconds : 0;
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     public String getStartFragment() {
         if (StringUtils.isEmpty(getStart())) {
             return StringUtils.EMPTY;

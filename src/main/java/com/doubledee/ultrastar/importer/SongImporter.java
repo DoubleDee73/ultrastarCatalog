@@ -436,10 +436,8 @@ public class SongImporter {
     }
 
     private void readPlaylist(File file) {
-        UltrastarPlaylist playlist = new UltrastarPlaylist(file);
-        if (!playlist.getSongs().isEmpty()) {
-            playlists.put(file.getName(), playlist);
-        }
+        // Empty playlists are loaded too, so that guests can fill them during the party
+        playlists.put(file.getName(), new UltrastarPlaylist(file));
     }
 
     public Map<String, UltrastarPlaylist> getPlaylists() {

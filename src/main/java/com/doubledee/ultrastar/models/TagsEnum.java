@@ -29,6 +29,7 @@ public enum TagsEnum {
     MUSICAL("Musical"),
     PARTY("Party"),
     PRIDE_LGBT("Pride/LGBTQ"),
+    RAP("Rap"),
     RELAXED("Relaxed"),
     SLOW("Slow"),
     SONG_CHECKED("Song-checked"),

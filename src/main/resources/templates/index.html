@@ -1,10 +1,11 @@
 <!DOCTYPE HTML>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
-    <title>Karaoke List</title>
+    <title th:text="#{page.title}">Karaoke List</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <link rel="stylesheet" type="text/css" href="/css/styles.css">
-    <link href="/css/tagify.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" th:href="@{/css/styles.css}">
+    <!-- Flags of the "Language" filter (SVG, displayed the same on every system) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
     <link rel="icon" type="image/png" sizes="16x16" href="/ico/ultrastarCatalog-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/ico/ultrastarCatalog-32.png">
     <link rel="icon" type="image/png" sizes="48x48" href="/ico/ultrastarCatalog-48.png">
@@ -14,65 +15,58 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
             crossorigin="anonymous"></script>
-    <script src="/js/jQuery.tagify.min.js"></script>
-    <script src="/js/jQuery.loadScroll.js"></script>
-    <script src="/js/transition.js"></script>
+    <script th:src="@{/js/jQuery.loadScroll.js}"></script>
+    <script th:src="@{/js/transition.js}"></script>
+    <script th:inline="javascript">
+        var playerLabels = {
+            play: /*[[#{player.play}]]*/ 'Play',
+            pause: /*[[#{player.pause}]]*/ 'Pause'
+        };
+        var playlistLabels = {
+            added: /*[[#{playlist.added}]]*/ 'Added to "{0}"',
+            already: /*[[#{playlist.already}]]*/ 'Already in "{0}"',
+            error: /*[[#{playlist.error}]]*/ 'Could not add the song',
+            loading: /*[[#{playlist.loading}]]*/ 'Loading...',
+            choose: /*[[#{playlist.choose}]]*/ 'Choose a playlist'
+        };
+        var catalogLabels = {
+            found: /*[[#{list.found}]]*/ '{0} songs found.'
+        };
+    </script>
+    <script th:src="@{/js/player.js}"></script>
+    <script th:src="@{/js/playlist.js}"></script>
+    <script th:src="@{/js/filters.js}"></script>
     <script>
-        document.addEventListener('play', function(e){
-            var audios = document.getElementsByTagName('audio');
-            for(var i = 0, len = audios.length; i < len;i++){
-                if(audios[i] != e.target){
-                    audios[i].pause();
-                }
-            }
-        }, true);
-        function openModal(songId) {
-            $.when(fetchSongInfo(songId)).done(function(modalContent) {
-                $('#modalContent').children().first().replaceWith(modalContent);
-                var modal = document.getElementById('modalLayer');
-                modal.style.display = "block";
-                var button = $(modalContent).find('#pl' + songId).html();
-                $('#buttonContent').children().first().replaceWith(button);
+        // "i" button of the song cards (and "Artist : Title" in the list): shows the song information popup
+        function openSongInfo(event, btn) {
+            event.stopPropagation();
+            event.preventDefault();
+            var songId = btn.getAttribute('data-songid');
+            $.ajax({url: '/songinfo/' + encodeURIComponent(songId)}).done(function (content) {
+                $('#modalContent').html(content);
+                document.getElementById('modalLayer').style.display = 'block';
             });
         }
         function closeModal() {
-            var modal = document.getElementById('modalLayer');
-            modal.style.display = "none";
+            document.getElementById('modalLayer').style.display = 'none';
         }
+        // Click on the dark background or Escape key: close the popup
         window.onclick = function(event) {
-            var modal = document.getElementById('modalLayer');
-            if (event.target == modal) {
-                modal.style.display = "none";
+            if (event.target == document.getElementById('modalLayer')) {
+                closeModal();
             }
         }
-        function add2Playlist(songId) {
-            var playlistName = document.getElementById('add2playlist').value;
-            $.ajax({
-                url: '/playlist/' + playlistName + '/' + songId,
-                type: 'PUT',
-                success: function(response){
-                    alert('Playlist saved');
-                },
-                complete: function(){
-                    setTimeout(ajax,1000);
-                }
-            });
-        }
-        function fetchSongInfo(songId) {
-            return $.ajax({
-                url: '/songinfo/' + songId
-                });
-        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
         function toggleFavorite(event, icon) {
-            event.stopPropagation(); 
-        
+            event.stopPropagation();
             const card = icon.closest(".flip-card-inner");
             const songId = card.getAttribute("data-songid");
-        
             let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
-        
             const index = favorites.indexOf(songId);
-        
             if (index === -1) {
               favorites.push(songId);
               icon.classList.remove("fa-regular");
@@ -82,121 +76,123 @@
               icon.classList.remove("fa-solid");
               icon.classList.add("fa-regular");
             }
-        
             localStorage.setItem("favorites", JSON.stringify(favorites));
-          }
-        
+        }
         document.addEventListener("DOMContentLoaded", function () {
             const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
             document.querySelectorAll(".flip-card-inner").forEach(card => {
-                const songId = card.getAttribute("data-songid");
                 const icon = card.querySelector(".favorite-icon");
-                
-                if (favorites.includes(songId)) {
+                if (favorites.includes(card.getAttribute("data-songid"))) {
                     icon.classList.remove("fa-regular");
                     icon.classList.add("fa-solid");
                 }
             });
         });
-        function submitFavorites(view) {
-            const favorites = localStorage.getItem("favorites") || "[]";
-            document.getElementById("favorites-input").value = favorites;
-            document.getElementById("favorites-view").value = view;
-            document.getElementById("favorites-form").submit();
-        }
     </script>
 </head>
 <body>
-    <div class="main">
-    <form method="GET">
-        <input type="hidden" th:if="${view} == 'list'" name="view" value="list">
-        <div class="box" th:unless="${favoritesActive}">
-            <div class="container-1">
-                <span class="icon"><i class="fa fa-search"></i></span>
-                <input type="search" id="search" name="searchterm" th:placeholder="${search}" th:value="${searchterm}"/>
-            </div>
+<header class="catalog-header">
+    <!-- Search + current filters. The filter screens write their choices into the hidden fields. -->
+    <form id="catalogForm" class="catalog-form" method="get" action="/">
+        <div class="search-box">
+            <input type="search" id="search" name="searchterm" autocomplete="off"
+                   th:value="${searchterm}" th:placeholder="#{search.placeholder}"/>
+            <button type="submit" class="search-submit" th:title="#{search.submit}"
+                    th:attr="aria-label=#{search.submit}"><i class="fa-solid fa-magnifying-glass"></i></button>
         </div>
-
-        <div class="searchform" th:unless="${favoritesActive}">
-            <div class="select-wrapper">
-                <label for="language">Language</label>
-                <select name="language" id="language" class="select-language" placeholder="Language">
-                    <option th:each="temp : ${languages}" th:value="${temp.languageCode}" th:text="${temp.displayLanguage}"
-                            th:selected="${temp.languageCode} == ${selectedLanguage.languageCode}"></option>
-                </select>
-            </div>
-            <div class="select-wrapper">
-                <label for="decade">Decade</label>
-                <select name="decade" id="decade" class="select-language" placeholder="Decade">
-                    <option th:each="temp : ${decades}" th:value="${temp.displayName}" th:text="${temp.displayName}"
-                            th:selected="${temp.displayName} == ${selectedDecade.displayName}"></option>
-                </select>
-            </div>
-            <div class="select-wrapper" th:unless="${playlists.keySet().isEmpty()}">
-                <label for="playlist">Playlists</label>
-                <select name="playlist" id="playlist" class="select-language" placeholder="Playlists">
-                    <option></option>
-                    <option th:each="entry : ${playlists.entrySet()}" th:value="${entry.key}" th:text="${entry.value.name}"
-                            th:selected="${entry.key} == ${selectedPlaylist}"></option>
-                </select>
-            </div>
-            <div class="select-wrapper" style="break-before:column">
-                <label for="decade">Tags</label>
-                <input name="tags" placeholder="write some tags" th:value="${filteredTags}">
-            </div>
-        </div>
-        <div class="box" style="text-align: center" th:unless="${favoritesActive}">
-            <button onclick="this.form.submit()" class="search">Search</button>
-        </div>
-        <script th:inline="javascript">
-            /*<![CDATA[*/
-            var whitelist = /*[[${tagsWhitelist}]]*/ [];
-            var tagInput = $('[name=tags]').tagify({
-                "duplicates":false,
-                "whitelist": whitelist,
-                "enforceWhitelist":true,
-                "editable":false,
-                "originalInputValueFormat": valuesArr => valuesArr.map(item => item.value).join(',')
-            });
-            tagInput.addEventListener('change', onChange);
-            function onChange(e){
-              // outputs a String
-              console.log(e.target.value)
-            }
-            /*]]>*/
-        </script>
+        <div id="hidden-language"><input type="hidden" name="language" th:each="v : ${selLanguages}" th:value="${v}"/></div>
+        <div id="hidden-decade"><input type="hidden" name="decade" th:each="v : ${selDecades}" th:value="${v}"/></div>
+        <div id="hidden-tags"><input type="hidden" name="tags" th:each="v : ${selTags}" th:value="${v}"/></div>
+        <div id="hidden-playlist"><input type="hidden" name="playlist" th:each="v : ${selPlaylists}" th:value="${v}"/></div>
+        <input type="hidden" id="f-sort" name="sort" th:value="${sort}"/>
+        <input type="hidden" id="f-dir" name="dir" th:value="${dir}"/>
+        <input type="hidden" id="f-view" name="view" value="list" th:disabled="${view != 'list'}"/>
+        <input type="hidden" id="f-fav" name="fav" value="1" th:disabled="${!fav}"/>
     </form>
-</div>
-<div class="wrapper">
-    <nav class="tabs">
-        <div class="selector"></div>
-        <a th:href="@{${artistLink}}" class="" th:classappend="${artistsActive} ? active : ''"><i class="fa fa-guitar"></i>Artists</a>
-        <a href="/title" class="" th:classappend="${titlesActive} ? active : ''"><i class="fa fa-music"></i>Title</a>
-        <a href="/"><i class="fa fa-tag"></i>Tags</a>
-        <a href="#"  th:classappend="${favoritesActive} ? active : ''" onclick="submitFavorites('')" id="favorites-link"><i class="fa fa-star"></i>Favorites</a>
-    </nav>
-</div>
-<form id="favorites-form" action="/favorites" method="post" style="display: none;">
-    <input type="hidden" name="favoritesJson" id="favorites-input">
-    <input type="hidden" name="view" id="favorites-view">
-</form>    
-<button style="float: right; margin-right: 20px; margin-bottom:1em;" th:attr="onclick=${listLink}">
-    <i th:unless="${view} == 'list'" class="fa fa-list"></i>
-    <i th:if="${view} == 'list'" class="fa fa-th-large"></i>
-</button>
 
-<div th:unless="${songs.empty}">
-    <div class="headline">
-        <span th:text="${songs.size()}">n</span> songs found.
+    <!-- Filters: each button opens a selection screen -->
+    <div class="filter-bar">
+        <button type="button" class="filter-pill" th:classappend="${!selLanguages.empty} ? 'active'"
+                onclick="openFilter('language')"><i class="fa-solid fa-globe"></i><span
+                th:text="#{filter.language}">Language</span><span class="pill-badge" th:unless="${selLanguages.empty}"
+                th:text="${selLanguages.size()}">1</span></button>
+        <button type="button" class="filter-pill" th:classappend="${!selDecades.empty} ? 'active'"
+                onclick="openFilter('decade')"><i class="fa-solid fa-calendar-days"></i><span
+                th:text="#{filter.decade}">Decade</span><span class="pill-badge" th:unless="${selDecades.empty}"
+                th:text="${selDecades.size()}">1</span></button>
+        <button type="button" class="filter-pill" th:classappend="${!selTags.empty} ? 'active'"
+                onclick="openFilter('tags')"><i class="fa-solid fa-tags"></i><span
+                th:text="#{filter.tags}">Tags</span><span class="pill-badge" th:unless="${selTags.empty}"
+                th:text="${selTags.size()}">1</span></button>
+        <button type="button" class="filter-pill" th:unless="${playlistOptions.empty}"
+                th:classappend="${!selPlaylists.empty} ? 'active'"
+                onclick="openFilter('playlist')"><i class="fa-solid fa-list-ul"></i><span
+                th:text="#{filter.playlists}">Playlists</span><span class="pill-badge" th:unless="${selPlaylists.empty}"
+                th:text="${selPlaylists.size()}">1</span></button>
+        <button type="button" class="filter-pill favorites-pill" th:classappend="${fav} ? 'active'"
+                onclick="toggleFavoritesFilter()"><i class="fa-solid fa-star"></i><span
+                th:text="#{filter.favorites}">Favorites</span></button>
     </div>
-</div>
+
+    <!-- Sort, number of songs, grid / list -->
+    <div class="toolbar">
+        <!-- Two buttons: the sort field (menu) and the order (A→Z / Z→A, 1→9 / 9→1 for the year) -->
+        <div class="sort-group" th:with="numeric=${sort == 'year'}">
+            <div class="sort-wrapper">
+                <button type="button" class="sort-button" onclick="toggleSortMenu(event)" th:title="#{sort.by}"
+                        th:attr="aria-label=#{sort.by}">
+                    <i th:class="${sortIcons.get(sort)}"></i><span th:text="#{sort.__${sort}__}">Artist</span><i
+                        class="fa-solid fa-caret-down sort-caret"></i>
+                </button>
+                <div class="sort-menu" id="sortMenu" hidden>
+                    <div class="sort-menu-title" th:text="#{sort.by}">Sort by</div>
+                    <button type="button" class="sort-item" th:each="s : ${ {'artist','title','language','year'} }"
+                            th:attr="data-sort=${s}" th:classappend="${s == sort} ? 'current'"
+                            onclick="chooseSort(this.getAttribute('data-sort'))">
+                        <i th:class="${sortIcons.get(s)} + ' sort-item-icon'"></i>
+                        <span class="sort-item-label" th:text="#{sort.__${s}__}">Artist</span>
+                        <i th:if="${s == sort}" class="fa-solid fa-check sort-item-check"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="button" class="sort-button sort-order" onclick="toggleSortOrder()"
+                    th:with="orderLabel=#{sort.order} + ' : ' + (${dir == 'desc'} ? #{sort.desc} : #{sort.asc})"
+                    th:title="${orderLabel}" th:attr="aria-label=${orderLabel}">
+                <i th:class="${numeric} ? (${dir == 'desc'} ? 'fa-solid fa-arrow-down-9-1' : 'fa-solid fa-arrow-up-1-9')
+                                        : (${dir == 'desc'} ? 'fa-solid fa-arrow-down-z-a' : 'fa-solid fa-arrow-up-a-z')"></i>
+            </button>
+        </div>
+        <div class="result-info">
+            <span id="resultCount" class="result-count" th:text="#{list.found(${songs.size()})}">n songs found.</span>
+            <a href="/" class="clear-filters" th:if="${hasFilters}" onclick="clearAllFilters(event)"><i
+                    class="fa-solid fa-xmark"></i> <span th:text="#{filter.clearAll}">Clear filters</span></a>
+        </div>
+        <button type="button" class="view-toggle" onclick="toggleView()"
+                th:title="${view == 'list'} ? #{view.grid} : #{view.list}"
+                th:attr="aria-label=${view == 'list'} ? #{view.grid} : #{view.list}"><i
+                th:class="${view == 'list'} ? 'fa-solid fa-table-cells-large' : 'fa-solid fa-list'"></i></button>
+    </div>
+</header>
+
 <div class="main">
-    <div th:if="${songs.empty}">
-        <span> No Songs Available </span>
+    <div id="emptyState" class="empty-state" th:hidden="${!songs.empty}">
+        <span th:text="#{page.noSongs}"> No Songs Available </span>
     </div>
     <div th:unless="${view} == 'list'" class="flip-card" th:each="song : ${songs}">
-        <div class="flip-card-inner" th:data-songid="${song.uid}" onclick="openModal(this.getAttribute('data-songid'))">
+        <div class="flip-card-inner" th:data-songid="${song.uid}">
+            <button type="button" class="info-button"
+                    th:data-songid="${song.uid}"
+                    th:title="#{info.button}" th:attr="aria-label=#{info.button}"
+                    onclick="openSongInfo(event, this)"><i class="fa-solid fa-info"></i></button>
             <i class="fa-regular fa-star favorite-icon" onclick="toggleFavorite(event, this)"></i>
+            <button type="button" class="play-button" th:unless="${lite}"
+                    th:data-songid="${song.uid}" th:data-start="${song.previewStartSeconds}"
+                    th:title="#{player.play}" th:attr="aria-label=#{player.play}"
+                    onclick="togglePlay(event, this)"><i class="fa-solid fa-play"></i></button>
+            <button type="button" class="playlist-button" th:unless="${playlists.empty}"
+                    th:data-songid="${song.uid}"
+                    th:title="#{playlist.add}" th:attr="aria-label=#{playlist.add}"
+                    onclick="togglePlaylistMenu(event, this)"><i class="fa-solid fa-plus"></i></button>
             <div class="flip-card-front">
                 <img th:src="@{/images/} + ${song.uid} + '.jpg'" loading="lazy"/>
                 <div class="text">
@@ -209,37 +205,41 @@
     <table th:if="${view} == 'list'" th:unless="${songs.empty}" class="songlist">
         <thead>
         <tr>
-            <th th:if="${artistsActive}" class="songlistHeader">Artist</th>
-            <th class="songlistHeader">Title</th>
-            <th th:unless="${artistsActive}" class="songlistHeader">Artist</th>
-            <th class="songlistHeader">Language</th>
-            <th class="songlistHeader">Year</th>
+            <th th:unless="${lite}" class="songlistHeader"></th>
+            <th class="songlistHeader" th:text="#{list.artistAndTitle}">Artist : Title</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:if="${view} == 'list'" th:each="song : ${songs}" class="songlist">
-            <td th:if="${artistsActive}" th:text=" ${song.artist}">Artist</td>
-            <td th:text=" ${song.titleAndVariant}">Title</td>
-            <td th:unless="${artistsActive}" th:text=" ${song.artist}">Artist</td>
-            <td th:text=" ${song.language}">Language</td>
-            <td th:text=" ${song.year}">Year</td>
+        <tr th:each="song : ${songs}" class="songlist" th:data-songid="${song.uid}">
+            <td th:unless="${lite}" class="play-cell">
+                <button type="button" class="play-button-small"
+                        th:data-songid="${song.uid}" th:data-start="${song.previewStartSeconds}"
+                        th:title="#{player.play}" th:attr="aria-label=#{player.play}"
+                        onclick="togglePlay(event, this)"><i class="fa-solid fa-play"></i></button>
+            </td>
+            <td>
+                <!-- Click on "Artist : Title" opens the song information popup -->
+                <button type="button" class="song-link" th:data-songid="${song.uid}"
+                        th:title="#{info.button}" onclick="openSongInfo(event, this)"><span
+                        class="song-link-artist" th:text="${song.artist}">Artist</span> : <span
+                        th:text="${song.titleAndVariant}">Title</span></button>
+            </td>
         </tr>
+        </tbody>
     </table>
     <div id="modalLayer" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal();">&times;</span>
-            <div id="modalContent"><span>Song-Info</span></div>
-            <div class="padded" th:unless="${playlists.empty}">
-                <p>Manage Playlist</p>
-                <select name="add2playlist" id="add2playlist" class="select-language" placeholder="Playlists">
-                    <option value="">Select Playlist</option>
-                    <option th:each="entry : ${playlists.entrySet()}" th:value="${entry.key}" th:text="${entry.value.name}"
-                            th:selected="${entry.key} == ${selectedPlaylist}"></option>
-                </select>
-            </div>
-            <div id="buttonContent" class="padded" th:unless="${playlists.empty}"><button></button></div>
+            <button type="button" class="modal-close" onclick="closeModal();"
+                    th:title="#{info.close}" th:attr="aria-label=#{info.close}">&times;</button>
+            <div id="modalContent"><span th:text="#{song.info}">Song-Info</span></div>
         </div>
     </div>
 </div>
+
+<!-- Selection screens of the filters (see filters.html) -->
+<th:block th:replace="~{filters :: filterModal('language', #{filter.language}, 'fa-solid fa-globe', ${languageOptions}, ${selLanguages})}"></th:block>
+<th:block th:replace="~{filters :: filterModal('decade', #{filter.decade}, 'fa-solid fa-calendar-days', ${decadeOptions}, ${selDecades})}"></th:block>
+<th:block th:replace="~{filters :: filterModal('tags', #{filter.tags}, 'fa-solid fa-tags', ${tagOptions}, ${selTags})}"></th:block>
+<th:block th:replace="~{filters :: filterModal('playlist', #{filter.playlists}, 'fa-solid fa-list-ul', ${playlistOptions}, ${selPlaylists})}"></th:block>
 </body>
 </html>
