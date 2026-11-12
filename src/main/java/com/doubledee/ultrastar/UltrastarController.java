@@ -1,6 +1,7 @@
 package com.doubledee.ultrastar;
 
 import com.doubledee.ultrastar.db.MsAccessDb;
+import com.doubledee.ultrastar.i18n.Labels;
 import com.doubledee.ultrastar.importer.SongImporter;
 import com.doubledee.ultrastar.models.*;
 import com.doubledee.ultrastar.utils.Normalizer;
@@ -24,6 +25,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -38,6 +41,9 @@ import java.util.stream.Stream;
 public class UltrastarController {
     @Autowired
     ServletContext context;
+
+    @Autowired
+    Labels labels;
 
     public static final Map<Integer, List<Pair<List<Integer>, List<Integer>>>> PERMUTATION_MAP = initPermutationMap();
 
@@ -90,7 +96,7 @@ public class UltrastarController {
                              @RequestParam(name = "view", required = false, defaultValue = "") String view,
                              Model model) {
         List<Song> songs = retrieveSonglist(ListMode.ARTIST, playlist);
-        Set<TagsEnum> filteredTags = TagsEnum.getTagsByString(tags);
+        Set<TagsEnum> filteredTags = labels.parseTags(tags);
         String tagsList = parseToString(filteredTags);
         songs = filterSongs(searchterm, songs, language, decade, filteredTags, true);
         return buildSonglistModel(model, songs, ListMode.ARTIST, searchterm, language, decade, playlist, tagsList, view);
@@ -105,7 +111,7 @@ public class UltrastarController {
                             @RequestParam(name = "view", required = false, defaultValue = "") String view,
                             Model model) {
         List<Song> songs = retrieveSonglist(ListMode.TITLE, playlist);
-        Set<TagsEnum> filteredTags = TagsEnum.getTagsByString(tags);
+        Set<TagsEnum> filteredTags = labels.parseTags(tags);
         String tagsList = parseToString(filteredTags);
         songs = filterSongs(searchterm, songs, language, decade, filteredTags, false);
         return buildSonglistModel(model, songs, ListMode.TITLE, searchterm, language, decade, playlist, tagsList, view);
@@ -339,10 +345,9 @@ public class UltrastarController {
                                       String filteredTags,
                                       String view) {
         String temp = "";
-        List<String> availableTags = new ArrayList<>(
-                Arrays.stream(TagsEnum.values()).map(TagsEnum::getTag).sorted().toList());
+        List<String> availableTags = labels.allTags(); // translated tag names
         model.addAttribute("songs", songs);
-        model.addAttribute("search", "Search for " + listMode.getHeadline());
+        model.addAttribute("listMode", listMode);
         model.addAttribute("artistsActive", listMode == ListMode.ARTIST);
         model.addAttribute("titlesActive", listMode == ListMode.TITLE);
         model.addAttribute("temp", temp);
@@ -383,7 +388,11 @@ public class UltrastarController {
             url.add("playlist=" + playlist);
         }
         if (StringUtils.isNotEmpty(filteredTags) ) {
-            url.add("tags=" + filteredTags);
+            // Links always carry the English tag names, so they work whatever the browser language
+            String englishTags = labels.parseTags(filteredTags).stream()
+                                       .map(TagsEnum::getTag)
+                                       .collect(Collectors.joining(","));
+            url.add("tags=" + URLEncoder.encode(englishTags, StandardCharsets.UTF_8));
         }
         if (StringUtils.isNotEmpty(view) && view.equals("list")) {
             url.add("view=list");
@@ -536,7 +545,7 @@ public class UltrastarController {
     }
 
     private String parseToString(Set<TagsEnum> filteredTags) {
-        return filteredTags.stream().map(TagsEnum::getTag).collect(Collectors.joining(","));
+        return labels.joinTags(filteredTags); // translated names, shown in the tags field
     }
     
     private List<String> splitSearchTerms(String searchTerm) {

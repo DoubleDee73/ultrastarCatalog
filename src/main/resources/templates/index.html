@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
-    <title>Karaoke List</title>
+    <title th:text="#{page.title}">Karaoke List</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <link rel="stylesheet" type="text/css" href="/css/styles.css">
     <link href="/css/tagify.css" rel="stylesheet">
@@ -17,6 +17,9 @@
     <script src="/js/jQuery.tagify.min.js"></script>
     <script src="/js/jQuery.loadScroll.js"></script>
     <script src="/js/transition.js"></script>
+    <script th:inline="javascript">
+        var playlistSavedMessage = /*[[#{js.playlistSaved}]]*/ 'Playlist saved';
+    </script>
     <script>
         document.addEventListener('play', function(e){
             var audios = document.getElementsByTagName('audio');
@@ -51,7 +54,7 @@
                 url: '/playlist/' + playlistName + '/' + songId,
                 type: 'PUT',
                 success: function(response){
-                    alert('Playlist saved');
+                    alert(playlistSavedMessage);
                 },
                 complete: function(){
                     setTimeout(ajax,1000);
@@ -113,27 +116,27 @@
         <div class="box" th:unless="${favoritesActive}">
             <div class="container-1">
                 <span class="icon"><i class="fa fa-search"></i></span>
-                <input type="search" id="search" name="searchterm" th:placeholder="${search}" th:value="${searchterm}"/>
+                <input type="search" id="search" name="searchterm" th:placeholder="#{search.placeholder.__${listMode}__}" th:value="${searchterm}"/>
             </div>
         </div>
 
         <div class="searchform" th:unless="${favoritesActive}">
             <div class="select-wrapper">
-                <label for="language">Language</label>
+                <label for="language" th:text="#{filter.language}">Language</label>
                 <select name="language" id="language" class="select-language" placeholder="Language">
-                    <option th:each="temp : ${languages}" th:value="${temp.languageCode}" th:text="${temp.displayLanguage}"
+                    <option th:each="temp : ${languages}" th:value="${temp.languageCode}" th:text="${@labels.language(temp)}"
                             th:selected="${temp.languageCode} == ${selectedLanguage.languageCode}"></option>
                 </select>
             </div>
             <div class="select-wrapper">
-                <label for="decade">Decade</label>
+                <label for="decade" th:text="#{filter.decade}">Decade</label>
                 <select name="decade" id="decade" class="select-language" placeholder="Decade">
-                    <option th:each="temp : ${decades}" th:value="${temp.displayName}" th:text="${temp.displayName}"
+                    <option th:each="temp : ${decades}" th:value="${temp.displayName}" th:text="${@labels.decade(temp)}"
                             th:selected="${temp.displayName} == ${selectedDecade.displayName}"></option>
                 </select>
             </div>
             <div class="select-wrapper" th:unless="${playlists.keySet().isEmpty()}">
-                <label for="playlist">Playlists</label>
+                <label for="playlist" th:text="#{filter.playlists}">Playlists</label>
                 <select name="playlist" id="playlist" class="select-language" placeholder="Playlists">
                     <option></option>
                     <option th:each="entry : ${playlists.entrySet()}" th:value="${entry.key}" th:text="${entry.value.name}"
@@ -141,12 +144,12 @@
                 </select>
             </div>
             <div class="select-wrapper" style="break-before:column">
-                <label for="decade">Tags</label>
-                <input name="tags" placeholder="write some tags" th:value="${filteredTags}">
+                <label for="tags" th:text="#{filter.tags}">Tags</label>
+                <input name="tags" id="tags" placeholder="write some tags" th:placeholder="#{filter.tags.placeholder}" th:value="${filteredTags}">
             </div>
         </div>
         <div class="box" style="text-align: center" th:unless="${favoritesActive}">
-            <button onclick="this.form.submit()" class="search">Search</button>
+            <button onclick="this.form.submit()" class="search" th:text="#{filter.search}">Search</button>
         </div>
         <script th:inline="javascript">
             /*<![CDATA[*/
@@ -170,10 +173,10 @@
 <div class="wrapper">
     <nav class="tabs">
         <div class="selector"></div>
-        <a th:href="@{${artistLink}}" class="" th:classappend="${artistsActive} ? active : ''"><i class="fa fa-guitar"></i>Artists</a>
-        <a href="/title" class="" th:classappend="${titlesActive} ? active : ''"><i class="fa fa-music"></i>Title</a>
-        <a href="/"><i class="fa fa-tag"></i>Tags</a>
-        <a href="#"  th:classappend="${favoritesActive} ? active : ''" onclick="submitFavorites('')" id="favorites-link"><i class="fa fa-star"></i>Favorites</a>
+        <a th:href="@{${artistLink}}" class="" th:classappend="${artistsActive} ? active : ''"><i class="fa fa-guitar"></i><span th:text="#{tab.artists}">Artists</span></a>
+        <a href="/title" class="" th:classappend="${titlesActive} ? active : ''"><i class="fa fa-music"></i><span th:text="#{tab.title}">Title</span></a>
+        <a href="/"><i class="fa fa-tag"></i><span th:text="#{tab.tags}">Tags</span></a>
+        <a href="#"  th:classappend="${favoritesActive} ? active : ''" onclick="submitFavorites('')" id="favorites-link"><i class="fa fa-star"></i><span th:text="#{tab.favorites}">Favorites</span></a>
     </nav>
 </div>
 <form id="favorites-form" action="/favorites" method="post" style="display: none;">
@@ -186,13 +189,11 @@
 </button>
 
 <div th:unless="${songs.empty}">
-    <div class="headline">
-        <span th:text="${songs.size()}">n</span> songs found.
-    </div>
+    <div class="headline" th:text="#{list.found(${songs.size()})}">n songs found.</div>
 </div>
 <div class="main">
     <div th:if="${songs.empty}">
-        <span> No Songs Available </span>
+        <span th:text="#{page.noSongs}"> No Songs Available </span>
     </div>
     <div th:unless="${view} == 'list'" class="flip-card" th:each="song : ${songs}">
         <div class="flip-card-inner" th:data-songid="${song.uid}" onclick="openModal(this.getAttribute('data-songid'))">
@@ -209,11 +210,11 @@
     <table th:if="${view} == 'list'" th:unless="${songs.empty}" class="songlist">
         <thead>
         <tr>
-            <th th:if="${artistsActive}" class="songlistHeader">Artist</th>
-            <th class="songlistHeader">Title</th>
-            <th th:unless="${artistsActive}" class="songlistHeader">Artist</th>
-            <th class="songlistHeader">Language</th>
-            <th class="songlistHeader">Year</th>
+            <th th:if="${artistsActive}" class="songlistHeader" th:text="#{list.artist}">Artist</th>
+            <th class="songlistHeader" th:text="#{list.title}">Title</th>
+            <th th:unless="${artistsActive}" class="songlistHeader" th:text="#{list.artist}">Artist</th>
+            <th class="songlistHeader" th:text="#{list.language}">Language</th>
+            <th class="songlistHeader" th:text="#{list.year}">Year</th>
         </tr>
         </thead>
         <tbody>
@@ -221,18 +222,18 @@
             <td th:if="${artistsActive}" th:text=" ${song.artist}">Artist</td>
             <td th:text=" ${song.titleAndVariant}">Title</td>
             <td th:unless="${artistsActive}" th:text=" ${song.artist}">Artist</td>
-            <td th:text=" ${song.language}">Language</td>
+            <td th:text="${@labels.languages(song)}">Language</td>
             <td th:text=" ${song.year}">Year</td>
         </tr>
     </table>
     <div id="modalLayer" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal();">&times;</span>
-            <div id="modalContent"><span>Song-Info</span></div>
+            <div id="modalContent"><span th:text="#{song.info}">Song-Info</span></div>
             <div class="padded" th:unless="${playlists.empty}">
-                <p>Manage Playlist</p>
+                <p th:text="#{song.managePlaylist}">Manage Playlist</p>
                 <select name="add2playlist" id="add2playlist" class="select-language" placeholder="Playlists">
-                    <option value="">Select Playlist</option>
+                    <option value="" th:text="#{song.selectPlaylist}">Select Playlist</option>
                     <option th:each="entry : ${playlists.entrySet()}" th:value="${entry.key}" th:text="${entry.value.name}"
                             th:selected="${entry.key} == ${selectedPlaylist}"></option>
                 </select>
